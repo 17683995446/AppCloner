@@ -1,3 +1,4 @@
+
 package com.appcloner
 
 import android.view.LayoutInflater
@@ -9,12 +10,12 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
 class AppAdapter(
-    private val appList: List<AppInfo>,
-    private val onSaveClick: (AppInfo) -> Unit,
-    private val onShareClick: (AppInfo) -> Unit,
-    private val onInstallClick: (AppInfo) -> Unit,
-    private val onDeleteClick: (AppInfo) -> Unit
-) : RecyclerView.Adapter<AppAdapter.AppViewHolder>() {
+    private val appList: List&lt;AppInfo&gt;,
+    private val onSaveClick: (AppInfo) -&gt; Unit,
+    private val onShareClick: (AppInfo) -&gt; Unit,
+    private val onInstallClick: (AppInfo) -&gt; Unit,
+    private val onDeleteClick: (AppInfo) -&gt; Unit
+) : RecyclerView.Adapter&lt;AppAdapter.AppViewHolder&gt;() {
 
     inner class AppViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val appIcon: ImageView = itemView.findViewById(R.id.appIcon)
@@ -57,7 +58,7 @@ class AppAdapter(
         } else {
             holder.appName.text = app.appName
             holder.packageName.text = app.packageName
-            holder.actionButton1.text = "Save"
+            holder.actionButton1.text = "Save/Clone"
             holder.actionButton2?.visibility = View.GONE
             
             holder.actionButton1.setOnClickListener {

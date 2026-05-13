@@ -1,3 +1,4 @@
+
 package com.appcloner
 
 import android.os.Bundle
@@ -13,7 +14,7 @@ class AppListFragment : Fragment() {
     private var isClonedList: Boolean = false
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: AppAdapter
-    private var appList: MutableList<AppInfo> = mutableListOf()
+    private var appList: MutableList&lt;AppInfo&gt; = mutableListOf()
 
     companion object {
         fun newInstance(isClonedList: Boolean): AppListFragment {
@@ -46,16 +47,16 @@ class AppListFragment : Fragment() {
         
         adapter = AppAdapter(
             appList,
-            onSaveClick = { app ->
-                (activity as? MainActivity)?.saveApk(app)
+            onSaveClick = { app -&gt;
+                (activity as? MainActivity)?.startCloneFlow(app)
             },
-            onShareClick = { app ->
+            onShareClick = { app -&gt;
                 (activity as? MainActivity)?.shareApk(app)
             },
-            onInstallClick = { app ->
+            onInstallClick = { app -&gt;
                 (activity as? MainActivity)?.installApk(app)
             },
-            onDeleteClick = { app ->
+            onDeleteClick = { app -&gt;
                 (activity as? MainActivity)?.showDeleteConfirmDialog(app)
             }
         )
@@ -63,7 +64,7 @@ class AppListFragment : Fragment() {
         recyclerView.adapter = adapter
     }
 
-    fun updateAppList(newList: List<AppInfo>) {
+    fun updateAppList(newList: List&lt;AppInfo&gt;) {
         appList.clear()
         appList.addAll(newList)
         adapter.notifyDataSetChanged()
