@@ -1,2 +1,0 @@
-This directory contains adaptive launcher icons.
-See ic_launcher.xml and ic_launcher_round.xml for adaptive icon definitions.

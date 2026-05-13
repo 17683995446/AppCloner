@@ -1,1 +1,0 @@
-Placeholder for mipmap-xxhdpi resources (144x144)
