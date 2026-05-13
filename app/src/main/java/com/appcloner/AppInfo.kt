@@ -7,5 +7,6 @@ data class AppInfo(
     val packageName: String,
     val icon: Drawable,
     val isCloned: Boolean = false,
-    val cloneId: Int = 0
+    val cloneId: Int = 0,
+    val apkPath: String? = null
 )

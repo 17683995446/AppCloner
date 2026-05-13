@@ -46,11 +46,14 @@ class AppListFragment : Fragment() {
         
         adapter = AppAdapter(
             appList,
-            onCloneClick = { app ->
-                (activity as? MainActivity)?.cloneApp(app)
+            onSaveClick = { app ->
+                (activity as? MainActivity)?.saveApk(app)
             },
-            onLaunchClick = { app ->
-                (activity as? MainActivity)?.launchClonedApp(app)
+            onShareClick = { app ->
+                (activity as? MainActivity)?.shareApk(app)
+            },
+            onInstallClick = { app ->
+                (activity as? MainActivity)?.installApk(app)
             },
             onDeleteClick = { app ->
                 (activity as? MainActivity)?.showDeleteConfirmDialog(app)

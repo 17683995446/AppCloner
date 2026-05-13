@@ -10,8 +10,9 @@ import androidx.recyclerview.widget.RecyclerView
 
 class AppAdapter(
     private val appList: List<AppInfo>,
-    private val onCloneClick: (AppInfo) -> Unit,
-    private val onLaunchClick: (AppInfo) -> Unit,
+    private val onSaveClick: (AppInfo) -> Unit,
+    private val onShareClick: (AppInfo) -> Unit,
+    private val onInstallClick: (AppInfo) -> Unit,
     private val onDeleteClick: (AppInfo) -> Unit
 ) : RecyclerView.Adapter<AppAdapter.AppViewHolder>() {
 
@@ -19,7 +20,8 @@ class AppAdapter(
         val appIcon: ImageView = itemView.findViewById(R.id.appIcon)
         val appName: TextView = itemView.findViewById(R.id.appName)
         val packageName: TextView = itemView.findViewById(R.id.packageName)
-        val actionButton: Button = itemView.findViewById(R.id.actionButton)
+        val actionButton1: Button = itemView.findViewById(R.id.actionButton1)
+        val actionButton2: Button? = itemView.findViewById(R.id.actionButton2)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AppViewHolder {
@@ -33,11 +35,19 @@ class AppAdapter(
         holder.appIcon.setImageDrawable(app.icon)
         
         if (app.isCloned) {
-            holder.appName.text = "${app.appName} (分身${app.cloneId})"
-            holder.actionButton.text = holder.itemView.context.getString(R.string.launch_app)
+            holder.appName.text = app.appName
+            holder.packageName.text = app.packageName
             
-            holder.actionButton.setOnClickListener {
-                onLaunchClick(app)
+            holder.actionButton1.text = "Install"
+            holder.actionButton2?.text = "Share"
+            holder.actionButton2?.visibility = View.VISIBLE
+            
+            holder.actionButton1.setOnClickListener {
+                onInstallClick(app)
+            }
+            
+            holder.actionButton2?.setOnClickListener {
+                onShareClick(app)
             }
             
             holder.itemView.setOnLongClickListener {
@@ -46,16 +56,16 @@ class AppAdapter(
             }
         } else {
             holder.appName.text = app.appName
-            holder.actionButton.text = holder.itemView.context.getString(R.string.clone_app)
+            holder.packageName.text = app.packageName
+            holder.actionButton1.text = "Save"
+            holder.actionButton2?.visibility = View.GONE
             
-            holder.actionButton.setOnClickListener {
-                onCloneClick(app)
+            holder.actionButton1.setOnClickListener {
+                onSaveClick(app)
             }
             
             holder.itemView.setOnLongClickListener(null)
         }
-        
-        holder.packageName.text = app.packageName
     }
 
     override fun getItemCount(): Int = appList.size
