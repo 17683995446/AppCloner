@@ -1,0 +1,1 @@
+Placeholder for mipmap-hdpi resources (72x72)

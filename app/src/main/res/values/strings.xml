@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">应用分身</string>
+    <string name="clone_app">分身应用</string>
+    <string name="launch_app">启动应用</string>
+    <string name="delete_clone">删除分身</string>
+    <string name="app_list">应用列表</string>
+    <string name="cloned_apps">已分身应用</string>
+    <string name="cloning">正在创建分身…</string>
+    <string name="clone_success">分身创建成功</string>
+    <string name="clone_failed">分身创建失败</string>
+    <string name="delete_confirm">确定要删除这个分身吗？</string>
+    <string name="yes">是</string>
+    <string name="no">否</string>
+</resources>
