@@ -2,9 +2,9 @@ name: Build Android APK
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, master ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, master ]
   workflow_dispatch:
 
 jobs:
@@ -25,25 +25,37 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v2
     
+    - name: Install Gradle
+      run: |
+        wget -q https://services.gradle.org/distributions/gradle-8.2-bin.zip -O /tmp/gradle.zip
+        unzip -q /tmp/gradle.zip -d /opt
+        echo "/opt/gradle-8.2/bin" >> $GITHUB_PATH
+        gradle --version
+    
+    - name: Regenerate gradle wrapper
+      run: |
+        gradle wrapper --gradle-version 8.2
+        ls -lh gradle/wrapper/
+    
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     
-    - name: Build with Gradle
-      run: ./gradlew assembleDebug --no-daemon
+    - name: Build Debug APK
+      run: ./gradlew assembleDebug --no-daemon --stacktrace
     
-    - name: Upload APK
+    - name: Upload Debug APK
       uses: actions/upload-artifact@v4
       with:
         name: app-debug-apk
         path: app/build/outputs/apk/debug/app-debug.apk
         retention-days: 7
     
-    - name: Upload Release APK
-      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    - name: Build Release APK
+      if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
       run: ./gradlew assembleRelease --no-daemon
     
-    - name: Upload Release APK Artifact
-      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    - name: Upload Release APK
+      if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
       uses: actions/upload-artifact@v4
       with:
         name: app-release-apk
