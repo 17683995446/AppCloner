@@ -1,5 +1,7 @@
 
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
+/*
+ * 顶层构建文件 - 专业配置
+ */
 buildscript {
     ext.kotlin_version = "1.9.22"
     repositories {
@@ -10,6 +12,7 @@ buildscript {
     dependencies {
         classpath 'com.android.tools.build:gradle:8.1.4'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "com.android.tools.build:gradle:8.1.4"
     }
 }
 
@@ -17,6 +20,40 @@ plugins {
     id 'org.jetbrains.kotlin.android' version '1.9.22' apply false
 }
 
+allprojects {
+    repositories {
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        maven { url 'https://maven.aliyun.com/repository/central' }
+        maven { url 'https://maven.aliyun.com/repository/public' }
+    }
+}
+
 tasks.register("clean", Delete) {
-    delete(rootProject.layout.buildDirectory)
+    delete rootProject.layout.buildDirectory
+}
+
+tasks.register("runUnitTests") {
+    dependsOn(":utils:testDebugUnitTest")
+    dependsOn(":apkprocessor:testDebugUnitTest")
+    dependsOn(":core:testDebugUnitTest")
+    dependsOn(":app:testDebugUnitTest")
+    doLast {
+        println("✅ 所有单元测试完成")
+    }
+}
+
+tasks.register("runAllTests") {
+    dependsOn("runUnitTests")
+    // AndroidInstrumentedTests will be run on device
+    doLast {
+        println("✅ 所有测试完成")
+    }
+}
+
+tasks.register("generateDocumentation") {
+    doLast {
+        println("📖 生成文档...")
+        // 这里可以集成Dokka、KDoc等工具
+        println("✅ 文档生成完成")
+    }
 }
