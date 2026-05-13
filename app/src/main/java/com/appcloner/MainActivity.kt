@@ -261,7 +261,8 @@ class MainActivity : AppCompatActivity() {
                 arscFile.writeBytes(arscContent)
             }
 
-            val unsignedApk = File(cacheDir, "unsigned_$System.currentTimeMillis().apk")
+            val timestamp = System.currentTimeMillis()
+            val unsignedApk = File(cacheDir, "unsigned_${timestamp}.apk")
             zipDirectory(tempDir, unsignedApk)
 
             signApkProperly(unsignedApk, outputApk)
