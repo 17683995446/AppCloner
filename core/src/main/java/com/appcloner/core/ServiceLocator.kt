@@ -44,6 +44,23 @@ class ServiceLocator(private val context: Context) {
     val preferencesManager: PreferencesManager by lazy {
         PreferencesManager(context)
     }
+    
+    // 产品化服务
+    val analyticsManager: AnalyticsManager by lazy {
+        AnalyticsManager.getInstance(context)
+    }
+    
+    val errorHandler: ErrorHandler by lazy {
+        ErrorHandler.getInstance(context, analyticsManager)
+    }
+    
+    val onboardingManager: OnboardingManager by lazy {
+        OnboardingManager.getInstance(context, preferencesManager)
+    }
+    
+    val sandboxManager: CloneSandboxManager by lazy {
+        CloneSandboxManager.getInstance(context, preferencesManager)
+    }
 
     companion object {
         @Volatile
