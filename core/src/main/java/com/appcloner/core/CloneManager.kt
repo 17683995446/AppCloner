@@ -1,6 +1,7 @@
 
 package com.appcloner.core
 
+import android.content.Context
 import com.appcloner.apkprocessor.*
 import com.appcloner.utils.LogUtils
 import kotlinx.coroutines.Dispatchers
@@ -31,8 +32,9 @@ data class CloneConfig(
  * 整合所有APK处理模块，提供统一的克隆服务
  */
 class CloneManager(
-    private val apkToolService: IApkToolService = ApkToolService(),
-    private val signerService: ISignerService = SignerService(),
+    private val context: Context,
+    private val apkToolService: IApkToolService = ApkToolService(context),
+    private val signerService: ISignerService = SignerService(context),
     private val packageNameModifier: PackageNameModifier = PackageNameModifier()
 ) {
 
