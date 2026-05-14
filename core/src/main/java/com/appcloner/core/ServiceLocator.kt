@@ -32,18 +32,26 @@ class ServiceLocator(private val context: Context) {
     }
     
     // 业务逻辑服务
-    val cloneManager: CloneManager by lazy {
-        CloneManager(
-            apkToolService = apkToolService,
-            signerService = signerService,
-            packageNameModifier = packageNameModifier
+    val appCloneManager: AppCloneManager by lazy {
+        AppCloneManager(
+            applicationContext = context,
+            apkDecompiler = apkToolService,
+            apkSigner = signerService,
+            packageModifier = packageNameModifier
         )
     }
     
+    // 向后兼容别名
+    @Deprecated("请使用 appCloneManager", ReplaceWith("appCloneManager"))
+    val cloneManager: CloneManager by lazy { appCloneManager as CloneManager }
+    
     // 应用存储服务
-    val preferencesManager: PreferencesManager by lazy {
-        PreferencesManager(context)
+    val appPreferencesManager: AppPreferencesManager by lazy {
+        AppPreferencesManager(context)
     }
+    
+    @Deprecated("请使用 appPreferencesManager", ReplaceWith("appPreferencesManager"))
+    val preferencesManager: PreferencesManager by lazy { appPreferencesManager as PreferencesManager }
     
     // 产品化服务
     val analyticsManager: AnalyticsManager by lazy {
