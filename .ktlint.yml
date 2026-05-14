@@ -1,0 +1,72 @@
+# Ktlint 配置 - Kotlin代码风格检查工具
+# 开源项目：https://github.com/pinterest/ktlint
+#
+# 统一Kotlin代码风格，保证代码一致性
+
+# IDE中的代码样式配置
+idea:
+  active_profile_name: "ktlint"
+  profiles:
+    ktlint:
+      code_style: official
+      ij_kotlin_imports_layout: *
+      ij_kotlin_allow_trailing_comma: true
+
+# 格式化规则
+format:
+  # 注释格式
+  max_line_length: 120
+
+# 规则集
+rules:
+  disabled_rules:
+    # 可以禁用不需要的规则
+    - "no-wildcard-imports"
+    - "import-ordering"
+
+  enabled_rules:
+    # 命名规则
+    - filename:
+        active: true
+    - annotation:
+        active: true
+    - no-single-line-if-else:
+        active: false
+    - no-line-break-before-assignment:
+        active: true
+    - chain-wrapping:
+        active: true
+        max_chain_wrapping_line_length: 3
+    - comment-spacing:
+        active: true
+    - enum-entry-name-case:
+        active: true
+    - dot-spacing:
+        active: true
+    - string-template:
+        active: true
+    - type-parameter-list-spacing:
+        active: true
+    - spacing-around-colon:
+        active: true
+    - spacing-around-comma:
+        active: true
+    - spacing-around-curly-braces:
+        active: true
+    - spacing-around-dot:
+        active: true
+    - spacing-around-keywords:
+        active: true
+    - spacing-around-parentheses:
+        active: true
+    - spacing-around-range:
+        active: true
+    - spacing-between-type-parameter-and-arrow:
+        active: true
+    - nullable-type-spacing:
+        active: true
+
+  experimental:
+    # 实验性规则（可选启用）
+    - ternary-spacing:
+        active: false
