@@ -5,27 +5,17 @@
 buildscript {
     ext.kotlin_version = "1.9.22"
     repositories {
-        maven { url 'https://maven.aliyun.com/repository/google' }
-        maven { url 'https://maven.aliyun.com/repository/central' }
-        maven { url 'https://maven.aliyun.com/repository/public' }
+        google()
+        mavenCentral()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:8.1.4'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "com.android.tools.build:gradle:8.1.4"
     }
 }
 
 plugins {
     id 'org.jetbrains.kotlin.android' version '1.9.22' apply false
-}
-
-allprojects {
-    repositories {
-        maven { url 'https://maven.aliyun.com/repository/google' }
-        maven { url 'https://maven.aliyun.com/repository/central' }
-        maven { url 'https://maven.aliyun.com/repository/public' }
-    }
 }
 
 tasks.register("clean", Delete) {

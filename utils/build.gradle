@@ -1,12 +1,32 @@
 
 plugins {
-    id 'java-library'
-    id 'kotlin'
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android'
 }
 
-java {
-    sourceCompatibility JavaVersion.VERSION_17
-    targetCompatibility JavaVersion.VERSION_17
+android {
+    namespace 'com.appcloner.utils'
+    compileSdk 34
+
+    defaultConfig {
+        minSdk 24
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
 }
 
 dependencies {

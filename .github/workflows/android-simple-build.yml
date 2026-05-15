@@ -1,3 +1,4 @@
+
 name: Build Android APK
 on:
   push:
@@ -19,12 +20,12 @@ jobs:
         cache: 'gradle'
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
-    - name: Check and grant execute permissions
-      run: |
-        chmod +x gradlew
-        ls -la
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+      with:
+        gradle-version: '8.2'
     - name: Build Debug APK
-      run: ./gradlew assembleDebug --no-daemon --stacktrace
+      run: gradle assembleDebug --no-daemon --stacktrace
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
       with:
