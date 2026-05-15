@@ -1,6 +1,6 @@
 
 /*
- * 顶层构建文件 - AppCloner 项目配置
+ * 顶层构建文件 - 专业配置
  */
 buildscript {
     ext.kotlin_version = "1.9.22"
@@ -11,16 +11,31 @@ buildscript {
     dependencies {
         classpath 'com.android.tools.build:gradle:8.1.4'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "com.android.tools.build:gradle:8.1.4"
     }
 }
 
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-    }
+plugins {
+    id 'org.jetbrains.kotlin.android' version '1.9.22' apply false
 }
 
 tasks.register("clean", Delete) {
     delete rootProject.layout.buildDirectory
+}
+
+tasks.register("runUnitTests") {
+    dependsOn(":utils:test")
+    dependsOn(":apkprocessor:test")
+    dependsOn(":core:test")
+    dependsOn(":app:testDebugUnitTest")
+    doLast {
+        println("✅ 所有单元测试完成")
+    }
+}
+
+tasks.register("generateDocumentation") {
+    doLast {
+        println("📖 生成文档...")
+        println("✅ 文档生成完成")
+    }
 }

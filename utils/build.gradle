@@ -1,40 +1,28 @@
-
 plugins {
-    id 'com.android.library'
-    id 'kotlin-android'
+    id 'java-library'
+    id 'kotlin'
 }
 
-android {
-    namespace 'com.appcloner.utils'
-    compileSdk 34
-
-    defaultConfig {
-        minSdk 24
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-    }
-
-    buildTypes {
-        release {
-            minifyEnabled false
-        }
-    }
-
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }
-
-    kotlinOptions {
-        jvmTarget = '17'
-    }
+java {
+    sourceCompatibility JavaVersion.VERSION_17
+    targetCompatibility JavaVersion.VERSION_17
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.22"
     implementation 'commons-io:commons-io:2.15.1'
-    
+
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'io.mockk:mockk:1.13.8'
     testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3'
-    testImplementation 'androidx.test:core:1.5.0'
+}
+
+tasks.withType(Test) {
+    testLogging {
+        events "passed", "skipped", "failed"
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
+        exceptionFormat = "full"
+    }
 }
