@@ -27,13 +27,12 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var viewPagerAdapter: ViewPagerAdapter
     private lateinit var sharedPreferences: SharedPreferences
-    private val savedApks = mutableListOf&lt;AppInfo&gt;()
-    private val originalApps = mutableListOf&lt;AppInfo&gt;()
+    private val savedApks = mutableListOf<AppInfo>()
+    private val originalApps = mutableListOf<AppInfo>()
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.Main + job)
     
-    // 核心业务组件
-    private val cloneManager = CloneManager()
+    private lateinit var cloneManager: CloneManager
 
     companion object {
         private const val PREFS_NAME = "AppClonerPrefs"
@@ -50,27 +49,28 @@ class MainActivity : AppCompatActivity() {
         LogUtils.setDefaultTag("AppClonerMain")
         LogUtils.i("App started - Version 2.0 (Modular Architecture)")
 
+        cloneManager = CloneManager(applicationContext)
+        
         setupViewPager()
         loadAppList()
         
-        // 添加帮助按钮
-        findViewById&lt;com.google.android.material.button.MaterialButton&gt;(R.id.helpBtn)?.setOnClickListener {
+        findViewById<com.google.android.material.button.MaterialButton>(R.id.helpBtn)?.setOnClickListener {
             showGuideDialog()
         }
     }
 
     private fun setupViewPager() {
         viewPagerAdapter = ViewPagerAdapter(this)
-        val viewPager = findViewById&lt;androidx.viewpager2.widget.ViewPager2&gt;(R.id.viewPager)
-        val tabLayout = findViewById&lt;TabLayout&gt;(R.id.tabLayout)
+        val viewPager = findViewById<androidx.viewpager2.widget.ViewPager2>(R.id.viewPager)
+        val tabLayout = findViewById<TabLayout>(R.id.tabLayout)
 
         viewPager.adapter = viewPagerAdapter
 
-        TabLayoutMediator(tabLayout, viewPager) { tab, position -&gt;
+        TabLayoutMediator(tabLayout, viewPager) { tab, position ->
             tab.text = when (position) {
-                0 -&gt; "Apps"
-                1 -&gt; "Saved APKs"
-                else -&gt; ""
+                0 -> "Apps"
+                1 -> "Saved APKs"
+                else -> ""
             }
         }.attach()
     }
@@ -86,10 +86,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun getInstalledApps(): List&lt;AppInfo&gt; {
-        val apps = mutableListOf&lt;AppInfo&gt;()
+    private fun getInstalledApps(): List<AppInfo> {
+        val apps = mutableListOf<AppInfo>()
         val packageManager = packageManager
-        val packages = packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
+        val packages = packageManager.getInstalledApplications(android.content.pm.PackageManager.GET_META_DATA)
 
         for (appInfo in packages) {
             if (appInfo.flags and ApplicationInfo.FLAG_SYSTEM == 0) {
@@ -112,7 +112,7 @@ class MainActivity : AppCompatActivity() {
             val entries = savedStr.split(",").filter { it.isNotEmpty() }
             for (entry in entries) {
                 val parts = entry.split("|")
-                if (parts.size &gt;= 3) {
+                if (parts.size >= 3) {
                     val name = parts[0]
                     val pkg = parts[1]
                     val path = parts[2]
@@ -187,7 +187,7 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        val uri = if (Build.VERSION.SDK_INT &gt;= Build.VERSION_CODES.N) {
+        val uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             androidx.core.content.FileProvider.getUriForFile(
                 this,
                 "$packageName.fileprovider",
@@ -219,7 +219,7 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        if (Build.VERSION.SDK_INT &gt;= Build.VERSION_CODES.O) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             if (!packageManager.canRequestPackageInstalls()) {
                 val intent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES)
                 intent.data = Uri.parse("package:$packageName")
@@ -229,7 +229,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val intent = Intent(Intent.ACTION_VIEW)
-        val uri = if (Build.VERSION.SDK_INT &gt;= Build.VERSION_CODES.N) {
+        val uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             androidx.core.content.FileProvider.getUriForFile(
                 this,
                 "$packageName.fileprovider",
@@ -244,24 +244,21 @@ class MainActivity : AppCompatActivity() {
         startActivity(intent)
     }
 
-    /**
-     * 开始克隆流程 - 新版本使用模块化的CloneManager
-     */
     fun startCloneFlow(appInfo: AppInfo) {
         AlertDialog.Builder(this)
             .setTitle("Clone ${appInfo.appName}")
-            .setMessage("This will create a cloned version of the app.\n\nNOTE: Professional APK modification requires tools like APKTool and Uber Apk Signer.")
-            .setPositiveButton("Continue (Demo Mode)") { _, _ -&gt;
-                performCloneDemo(appInfo)
+            .setMessage("This will create a cloned version of the app.\n\nNOTE: This requires APKTool integration for real cloning.")
+            .setPositiveButton("Clone") { _, _ ->
+                performClone(appInfo)
             }
             .setNegativeButton("Cancel", null)
             .show()
     }
 
-    private fun performCloneDemo(appInfo: AppInfo) {
+    private fun performClone(appInfo: AppInfo) {
         scope.launch {
             val progressDialog = ProgressDialog(this@MainActivity)
-            progressDialog.setMessage("Starting demo clone...")
+            progressDialog.setMessage("Cloning app...")
             progressDialog.setCancelable(false)
             progressDialog.show()
 
@@ -270,7 +267,6 @@ class MainActivity : AppCompatActivity() {
                 val outputDir = File(getExternalFilesDir(null), "cloned_apks")
                 FileUtils.ensureDirectoryExists(outputDir)
                 
-                // 为了演示，我们只是保存一个副本，真实克隆需要APKTool等工具
                 val newPackageName = "${appInfo.packageName}.clone${System.currentTimeMillis()}"
                 val newName = "${appInfo.appName} (Clone)"
                 
@@ -281,7 +277,6 @@ class MainActivity : AppCompatActivity() {
                     outputDir = outputDir
                 )
 
-                // 演示模式下的回调
                 val listener = object : CloneProgressListener {
                     override fun onProgress(step: Int, total: Int, message: String) {
                         progressDialog.setMessage("Step $step/$total: $message")
@@ -289,7 +284,7 @@ class MainActivity : AppCompatActivity() {
 
                     override fun onSuccess(clonedApk: File) {
                         progressDialog.dismiss()
-                        Toast.makeText(this@MainActivity, "Demo complete! Cloned APK created.", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this@MainActivity, "Clone successful! APK created.", Toast.LENGTH_LONG).show()
                         
                         val savedInfo = AppInfo(newName, newPackageName, appInfo.icon, true, 0, clonedApk.absolutePath)
                         savedApks.add(0, savedInfo)
@@ -303,13 +298,53 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
-                // 在实际项目中，这里会调用 cloneManager.cloneApp()
-                // 现在为了演示，我们直接复制文件
+                val result = cloneManager.cloneApp(config, listener)
+                
+                if (result.isSuccess) {
+                    val clonedApk = result.getOrThrow()
+                    val savedInfo = AppInfo(newName, newPackageName, appInfo.icon, true, 0, clonedApk.absolutePath)
+                    savedApks.add(0, savedInfo)
+                    saveSavedApks()
+                    updateFragments()
+                    
+                    progressDialog.dismiss()
+                    Toast.makeText(this@MainActivity, "Clone successful! You can install it now.", Toast.LENGTH_LONG).show()
+                } else {
+                    progressDialog.dismiss()
+                    val errorMsg = result.exceptionOrNull()?.message ?: "Unknown error"
+                    Toast.makeText(this@MainActivity, "Clone failed: $errorMsg\n\nTrying demo mode...", Toast.LENGTH_LONG).show()
+                    
+                    performCloneFallback(appInfo)
+                }
+
+            } catch (e: Exception) {
+                progressDialog.dismiss()
+                Toast.makeText(this@MainActivity, "Error: ${e.message}", Toast.LENGTH_LONG).show()
+                LogUtils.e("Clone failed", e)
+            }
+        }
+    }
+
+    private fun performCloneFallback(appInfo: AppInfo) {
+        scope.launch {
+            val progressDialog = ProgressDialog(this@MainActivity)
+            progressDialog.setMessage("Using fallback mode...")
+            progressDialog.setCancelable(false)
+            progressDialog.show()
+
+            try {
+                val sourceDir = File(packageManager.getApplicationInfo(appInfo.packageName, 0).sourceDir)
+                val outputDir = File(getExternalFilesDir(null), "cloned_apks")
+                FileUtils.ensureDirectoryExists(outputDir)
+                
+                val newPackageName = "${appInfo.packageName}.clone${System.currentTimeMillis()}"
+                val newName = "${appInfo.appName} (Clone)"
+                
                 val destFile = File(outputDir, "${newName.replace(" ", "_")}.apk")
                 FileUtils.copyFile(sourceDir, destFile)
                 
                 progressDialog.dismiss()
-                Toast.makeText(this@MainActivity, "APK copied as clone (demo mode).\nFor real APK modification, integrate APKTool.", Toast.LENGTH_LONG).show()
+                Toast.makeText(this@MainActivity, "Fallback: APK copied.\nNote: For real cloning, use your device's built-in clone feature.", Toast.LENGTH_LONG).show()
                 
                 val savedInfo = AppInfo(newName, newPackageName, appInfo.icon, true, 0, destFile.absolutePath)
                 savedApks.add(0, savedInfo)
@@ -318,8 +353,8 @@ class MainActivity : AppCompatActivity() {
 
             } catch (e: Exception) {
                 progressDialog.dismiss()
-                Toast.makeText(this@MainActivity, "Error: ${e.message}", Toast.LENGTH_LONG).show()
-                LogUtils.e("Clone failed", e)
+                Toast.makeText(this@MainActivity, "Fallback error: ${e.message}", Toast.LENGTH_LONG).show()
+                LogUtils.e("Fallback clone failed", e)
             }
         }
     }
@@ -344,7 +379,7 @@ For better results, use your phone's built-in clone feature!
         AlertDialog.Builder(this)
             .setTitle("Delete?")
             .setMessage("Delete this saved APK?")
-            .setPositiveButton("Delete") { _, _ -&gt;
+            .setPositiveButton("Delete") { _, _ ->
                 try {
                     if (appInfo.apkPath != null) {
                         File(appInfo.apkPath).delete()
@@ -369,7 +404,7 @@ For better results, use your phone's built-in clone feature!
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_CODE_INSTALL) {
-            if (Build.VERSION.SDK_INT &gt;= Build.VERSION_CODES.O &amp;&amp; packageManager.canRequestPackageInstalls()) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && packageManager.canRequestPackageInstalls()) {
                 Toast.makeText(this, "Permission granted - try again", Toast.LENGTH_SHORT).show()
             }
         }
