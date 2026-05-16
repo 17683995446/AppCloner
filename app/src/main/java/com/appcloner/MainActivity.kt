@@ -10,6 +10,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.provider.Settings
 import android.text.Editable
 import android.text.TextWatcher
@@ -27,6 +28,7 @@ import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 import kotlinx.coroutines.*
 import java.io.File
+import java.io.FileWriter
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -34,9 +36,11 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var viewPagerAdapter: ViewPagerAdapter
     private lateinit var sharedPreferences: SharedPreferences
-    private val savedApks = mutableListOf<AppInfo>()
-    private val originalApps = mutableListOf<AppInfo>()
-    private val filteredApps = mutableListOf<AppInfo>()
+    private val savedApks = mutableListOf&lt;AppInfo&gt;()
+    private val originalApps = mutableListOf&lt;AppInfo&gt;()
+    private val filteredApps = mutableListOf&lt;AppInfo&gt;()
+    private val selectedApps = mutableSetOf&lt;String&gt;()
+    private val favoriteApps = mutableSetOf&lt;String&gt;()
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.Main + job)
     
@@ -44,13 +48,14 @@ class MainActivity : AppCompatActivity() {
     private var isDarkMode = false
     private var sortBy = SortType.NAME
     private var isMultiSelectMode = false
-    private val selectedApps = mutableSetOf<String>()
+    private var currentTab = 0
 
     companion object {
         private const val PREFS_NAME = "AppClonerPrefs"
         private const val KEY_SAVED_APKS = "savedApks"
         private const val KEY_DARK_MODE = "darkMode"
         private const val KEY_SORT_BY = "sortBy"
+        private const val KEY_FAVORITES = "favorites"
         private const val REQUEST_CODE_INSTALL = 1001
     }
 
@@ -58,25 +63,24 @@ class MainActivity : AppCompatActivity() {
         NAME,
         SIZE,
         INSTALL_TIME,
-        UPDATE_TIME
+        UPDATE_TIME,
+        FAVORITE
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Load saved preferences
         sharedPreferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         isDarkMode = sharedPreferences.getBoolean(KEY_DARK_MODE, false)
         sortBy = SortType.valueOf(sharedPreferences.getString(KEY_SORT_BY, SortType.NAME.name) ?: SortType.NAME.name)
+        favoriteApps.addAll(sharedPreferences.getString(KEY_FAVORITES, "")?.split(",")?.filter { it.isNotEmpty() } ?: emptyList())
         
-        // Apply theme
         applyTheme()
-        
         setContentView(R.layout.activity_main)
 
         loadSavedApks()
         LogUtils.setDefaultTag("AppClonerMain")
-        LogUtils.i("App started - Version 3.0 (Enhanced Features)")
+        LogUtils.i("App started - Version 3.1 (Enhanced Features)")
 
         cloneManager = CloneManager(applicationContext)
         
@@ -85,11 +89,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun applyTheme() {
-        if (isDarkMode) {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-        } else {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
-        }
+        AppCompatDelegate.setDefaultNightMode(
+            if (isDarkMode) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
+        )
     }
 
     private fun setupUI() {
@@ -100,22 +102,28 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupViewPager() {
         viewPagerAdapter = ViewPagerAdapter(this)
-        val viewPager = findViewById<androidx.viewpager2.widget.ViewPager2>(R.id.viewPager)
-        val tabLayout = findViewById<TabLayout>(R.id.tabLayout)
+        val viewPager = findViewById&lt;androidx.viewpager2.widget.ViewPager2&gt;(R.id.viewPager)
+        val tabLayout = findViewById&lt;TabLayout&gt;(R.id.tabLayout)
 
         viewPager.adapter = viewPagerAdapter
+        viewPager.registerOnPageChangeCallback(object : androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback() {
+            override fun onPageSelected(position: Int) {
+                currentTab = position
+            }
+        })
 
-        TabLayoutMediator(tabLayout, viewPager) { tab, position ->
+        TabLayoutMediator(tabLayout, viewPager) { tab, position -&gt;
             tab.text = when (position) {
-                0 -> "安装应用"
-                1 -> "保存的APK"
-                else -> ""
+                0 -&gt; "安装应用"
+                1 -&gt; "保存的APK"
+                2 -&gt; "收藏"
+                else -&gt; ""
             }
         }.attach()
     }
 
     private fun setupSearch() {
-        val searchEditText = findViewById<EditText>(R.id.searchEditText)
+        val searchEditText = findViewById&lt;EditText&gt;(R.id.searchEditText)
         searchEditText?.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             
@@ -128,24 +136,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupButtons() {
-        // Theme toggle button
-        findViewById<Button>(R.id.themeBtn)?.setOnClickListener {
+        findViewById&lt;Button&gt;(R.id.themeBtn)?.setOnClickListener {
             toggleTheme()
         }
         
-        // Sort button
-        findViewById<Button>(R.id.sortBtn)?.setOnClickListener {
+        findViewById&lt;Button&gt;(R.id.sortBtn)?.setOnClickListener {
             showSortDialog()
         }
         
-        // Batch action button
-        findViewById<Button>(R.id.batchBtn)?.setOnClickListener {
-            toggleMultiSelectMode()
+        findViewById&lt;Button&gt;(R.id.batchBtn)?.setOnClickListener {
+            showBatchActionsDialog()
         }
         
-        // Help button
-        findViewById<Button>(R.id.helpBtn)?.setOnClickListener {
-            showGuideDialog()
+        findViewById&lt;Button&gt;(R.id.helpBtn)?.setOnClickListener {
+            showHelpDialog()
         }
     }
 
@@ -160,14 +164,15 @@ class MainActivity : AppCompatActivity() {
             "按名称",
             "按大小",
             "按安装时间",
-            "按更新时间"
+            "按更新时间",
+            "收藏优先"
         )
         
         val currentIndex = SortType.values().indexOf(sortBy)
         
         AlertDialog.Builder(this)
             .setTitle("排序方式")
-            .setSingleChoiceItems(sortOptions, currentIndex) { _, which ->
+            .setSingleChoiceItems(sortOptions, currentIndex) { _, which -&gt;
                 sortBy = SortType.values()[which]
                 sharedPreferences.edit().putString(KEY_SORT_BY, sortBy.name).apply()
                 loadAppList()
@@ -176,22 +181,53 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun toggleMultiSelectMode() {
-        isMultiSelectMode = !isMultiSelectMode
-        selectedApps.clear()
-        
-        if (isMultiSelectMode) {
-            Toast.makeText(this, "多选模式已开启", Toast.LENGTH_SHORT).show()
+    private fun showBatchActionsDialog() {
+        val options = if (currentTab == 0) {
+            arrayOf(
+                "批量收藏",
+                "批量保存APK",
+                "批量启动",
+                "导出应用列表",
+                "取消全选"
+            )
+        } else {
+            arrayOf(
+                "批量分享",
+                "批量安装",
+                "批量删除",
+                "取消全选"
+            )
         }
         
-        updateFragments()
+        AlertDialog.Builder(this)
+            .setTitle("批量操作")
+            .setItems(options) { _, which -&gt;
+                when {
+                    currentTab == 0 -&gt; {
+                        when (which) {
+                            0 -&gt; batchAddToFavorites()
+                            1 -&gt; batchSaveApk()
+                            2 -&gt; batchLaunch()
+                            3 -&gt; exportAppList()
+                            4 -&gt; selectedApps.clear()
+                        }
+                    }
+                    else -&gt; {
+                        when (which) {
+                            0 -&gt; batchShareApk()
+                            1 -&gt; batchInstallApk()
+                            2 -&gt; batchDeleteApk()
+                            3 -&gt; selectedApps.clear()
+                        }
+                    }
+                }
+                updateFragments()
+            }
+            .show()
     }
 
     private fun filterApps(query: String) {
-        val viewPager = findViewById<androidx.viewpager2.widget.ViewPager2>(R.id.viewPager)
-        val currentFragment = viewPagerAdapter.getFragment(viewPager.currentItem)
-        
-        if (viewPager.currentItem == 0) {
+        if (currentTab == 0) {
             filteredApps.clear()
             if (query.isEmpty()) {
                 filteredApps.addAll(originalApps)
@@ -203,7 +239,20 @@ class MainActivity : AppCompatActivity() {
                     }
                 )
             }
-            currentFragment.updateAppList(filteredApps)
+            viewPagerAdapter.getFragment(0).updateAppList(filteredApps)
+        } else if (currentTab == 2) {
+            val favoriteList = originalApps.filter { favoriteApps.contains(it.packageName) }.toMutableList()
+            if (query.isNotEmpty()) {
+                favoriteList.clear()
+                favoriteList.addAll(
+                    originalApps.filter { 
+                        favoriteApps.contains(it.packageName) &&
+                        (it.appName.contains(query, ignoreCase = true) ||
+                        it.packageName.contains(query, ignoreCase = true))
+                    }
+                )
+            }
+            viewPagerAdapter.getFragment(2).updateAppList(favoriteList)
         } else {
             updateFragments()
         }
@@ -220,8 +269,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun getInstalledApps(): List<AppInfo> {
-        val apps = mutableListOf<AppInfo>()
+    private fun getInstalledApps(): List&lt;AppInfo&gt; {
+        val apps = mutableListOf&lt;AppInfo&gt;()
         val packageManager = packageManager
         val packages = packageManager.getInstalledApplications(android.content.pm.PackageManager.GET_META_DATA)
 
@@ -230,8 +279,6 @@ class MainActivity : AppCompatActivity() {
                 try {
                     val name = packageManager.getApplicationLabel(appInfo).toString()
                     val icon = packageManager.getApplicationIcon(appInfo.packageName)
-                    
-                    // Get detailed info
                     val packageInfo = packageManager.getPackageInfo(appInfo.packageName, 0)
                     val apkFile = File(appInfo.sourceDir)
                     val apkSize = apkFile.length()
@@ -242,14 +289,15 @@ class MainActivity : AppCompatActivity() {
                             packageName = appInfo.packageName,
                             icon = icon,
                             versionName = packageInfo.versionName,
-                            versionCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                            versionCode = if (Build.VERSION.SDK_INT &gt;= Build.VERSION_CODES.P) {
                                 packageInfo.longVersionCode
                             } else {
                                 packageInfo.versionCode.toLong()
                             },
                             installTime = packageInfo.firstInstallTime,
                             updateTime = packageInfo.lastUpdateTime,
-                            apkSize = apkSize
+                            apkSize = apkSize,
+                            isFavorite = favoriteApps.contains(appInfo.packageName)
                         )
                     )
                 } catch (e: Exception) {
@@ -258,12 +306,12 @@ class MainActivity : AppCompatActivity() {
             }
         }
         
-        // Sort apps
         return when (sortBy) {
-            SortType.NAME -> apps.sortedBy { it.appName }
-            SortType.SIZE -> apps.sortedByDescending { it.apkSize }
-            SortType.INSTALL_TIME -> apps.sortedByDescending { it.installTime }
-            SortType.UPDATE_TIME -> apps.sortedByDescending { it.updateTime }
+            SortType.NAME -&gt; apps.sortedBy { it.appName }
+            SortType.SIZE -&gt; apps.sortedByDescending { it.apkSize }
+            SortType.INSTALL_TIME -&gt; apps.sortedByDescending { it.installTime }
+            SortType.UPDATE_TIME -&gt; apps.sortedByDescending { it.updateTime }
+            SortType.FAVORITE -&gt; apps.sortedWith(compareByDescending&lt;AppInfo&gt; { it.isFavorite }.thenBy { it.appName })
         }
     }
 
@@ -274,7 +322,7 @@ class MainActivity : AppCompatActivity() {
             val entries = savedStr.split(",").filter { it.isNotEmpty() }
             for (entry in entries) {
                 val parts = entry.split("|")
-                if (parts.size >= 3) {
+                if (parts.size &gt;= 3) {
                     val name = parts[0]
                     val pkg = parts[1]
                     val path = parts[2]
@@ -304,6 +352,23 @@ class MainActivity : AppCompatActivity() {
             "${it.appName}|${it.packageName}|${it.apkPath ?: ""}"
         }
         sharedPreferences.edit().putString(KEY_SAVED_APKS, savedStr).apply()
+    }
+
+    private fun saveFavorites() {
+        sharedPreferences.edit().putString(KEY_FAVORITES, favoriteApps.joinToString(",")).apply()
+    }
+
+    fun toggleFavorite(app: AppInfo) {
+        if (favoriteApps.contains(app.packageName)) {
+            favoriteApps.remove(app.packageName)
+            Toast.makeText(this, "已取消收藏: ${app.appName}", Toast.LENGTH_SHORT).show()
+        } else {
+            favoriteApps.add(app.packageName)
+            Toast.makeText(this, "已收藏: ${app.appName}", Toast.LENGTH_SHORT).show()
+        }
+        saveFavorites()
+        app.isFavorite = !app.isFavorite
+        updateFragments()
     }
 
     fun saveApk(appInfo: AppInfo) {
@@ -357,7 +422,7 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        val uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        val uri = if (Build.VERSION.SDK_INT &gt;= Build.VERSION_CODES.N) {
             androidx.core.content.FileProvider.getUriForFile(
                 this,
                 "$packageName.fileprovider",
@@ -389,7 +454,7 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (Build.VERSION.SDK_INT &gt;= Build.VERSION_CODES.O) {
             if (!packageManager.canRequestPackageInstalls()) {
                 val intent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES)
                 intent.data = Uri.parse("package:$packageName")
@@ -399,7 +464,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val intent = Intent(Intent.ACTION_VIEW)
-        val uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        val uri = if (Build.VERSION.SDK_INT &gt;= Build.VERSION_CODES.N) {
             androidx.core.content.FileProvider.getUriForFile(
                 this,
                 "$packageName.fileprovider",
@@ -437,26 +502,31 @@ class MainActivity : AppCompatActivity() {
             message.append("版本: ${appInfo.versionName} (${appInfo.versionCode})\n")
         }
         
-        if (appInfo.apkSize > 0) {
+        if (appInfo.apkSize &gt; 0) {
             message.append("大小: ${appInfo.getFormattedSize()}\n")
         }
         
-        if (appInfo.installTime > 0) {
+        if (appInfo.installTime &gt; 0) {
             message.append("安装时间: ${sdf.format(Date(appInfo.installTime))}\n")
         }
         
-        if (appInfo.updateTime > 0) {
+        if (appInfo.updateTime &gt; 0) {
             message.append("更新时间: ${sdf.format(Date(appInfo.updateTime))}\n")
         }
         
         if (!appInfo.apkPath.isNullOrEmpty()) {
             message.append("APK路径: ${appInfo.apkPath}\n")
         }
+        
+        message.append("是否收藏: ${if (appInfo.isFavorite) "是" else "否"}")
 
         AlertDialog.Builder(this)
             .setTitle(appInfo.appName)
             .setMessage(message.toString())
             .setPositiveButton("确定", null)
+            .setNeutralButton(if (appInfo.isFavorite) "取消收藏" else "收藏") { _, _ -&gt;
+                toggleFavorite(appInfo)
+            }
             .show()
     }
 
@@ -464,7 +534,7 @@ class MainActivity : AppCompatActivity() {
         AlertDialog.Builder(this)
             .setTitle("克隆 ${appInfo.appName}")
             .setMessage("这将创建应用的克隆版本。\n\n注意：实际克隆需要APKTool工具支持。")
-            .setPositiveButton("克隆") { _, _ ->
+            .setPositiveButton("克隆") { _, _ -&gt;
                 performClone(appInfo)
             }
             .setNegativeButton("取消", null)
@@ -575,38 +645,188 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun showGuideDialog() {
-        AlertDialog.Builder(this)
-            .setTitle("应用克隆指南")
-            .setMessage("""
-AppCloner 3.0 功能：
+    private fun batchAddToFavorites() {
+        val listToUse = if (filteredApps.isEmpty()) originalApps else filteredApps
+        val countBefore = favoriteApps.size
+        listToUse.forEach { 
+            favoriteApps.add(it.packageName)
+            it.isFavorite = true
+        }
+        saveFavorites()
+        Toast.makeText(this, "已收藏 ${favoriteApps.size - countBefore} 个应用", Toast.LENGTH_SHORT).show()
+    }
 
+    private fun batchSaveApk() {
+        val listToUse = if (filteredApps.isEmpty()) originalApps else filteredApps
+        if (listToUse.isEmpty()) {
+            Toast.makeText(this, "没有可用的应用", Toast.LENGTH_SHORT).show()
+            return
+        }
+        AlertDialog.Builder(this)
+            .setTitle("批量保存")
+            .setMessage("确定要保存 ${listToUse.size} 个应用的 APK 吗？\n这可能需要一些时间。")
+            .setPositiveButton("确定") { _, _ -&gt;
+                scope.launch {
+                    var successCount = 0
+                    val progressDialog = ProgressDialog(this@MainActivity)
+                    progressDialog.setMessage("正在保存 APK...")
+                    progressDialog.setCancelable(false)
+                    progressDialog.setMax(listToUse.size)
+                    progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
+                    progressDialog.show()
+                    
+                    listToUse.forEachIndexed { index, app -&gt;
+                        progressDialog.progress = index
+                        try {
+                            val sourceDir = File(packageManager.getApplicationInfo(app.packageName, 0).sourceDir)
+                            val outputDir = File(getExternalFilesDir(null), "saved_apks")
+                            FileUtils.ensureDirectoryExists(outputDir)
+                            val destFile = File(outputDir, "${app.packageName}_${System.currentTimeMillis()}.apk")
+                            FileUtils.copyFile(sourceDir, destFile)
+                            
+                            val savedInfo = AppInfo(
+                                appName = app.appName,
+                                packageName = app.packageName,
+                                icon = app.icon,
+                                isCloned = true,
+                                apkPath = destFile.absolutePath,
+                                versionName = app.versionName,
+                                apkSize = destFile.length()
+                            )
+                            savedApks.add(0, savedInfo)
+                            successCount++
+                        } catch (e: Exception) {
+                            LogUtils.e("Failed to save ${app.packageName}", e)
+                        }
+                    }
+                    saveSavedApks()
+                    progressDialog.dismiss()
+                    loadSavedApks()
+                    updateFragments()
+                    Toast.makeText(this@MainActivity, "成功保存 $successCount / ${listToUse.size} 个 APK", Toast.LENGTH_LONG).show()
+                }
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun batchLaunch() {
+        val listToUse = if (filteredApps.isEmpty()) originalApps else filteredApps
+        var launchedCount = 0
+        listToUse.forEach { app -&gt;
+            try {
+                val intent = packageManager.getLaunchIntentForPackage(app.packageName)
+                if (intent != null) {
+                    startActivity(intent)
+                    launchedCount++
+                    Thread.sleep(500) // 延迟避免问题
+                }
+            } catch (e: Exception) {
+                LogUtils.e("Failed to launch ${app.packageName}", e)
+            }
+        }
+        Toast.makeText(this, "尝试启动了 $launchedCount 个应用", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun batchShareApk() {
+        if (savedApks.isEmpty()) {
+            Toast.makeText(this, "没有可分享的 APK", Toast.LENGTH_SHORT).show()
+            return
+        }
+        Toast.makeText(this, "选择单个 APK 进行分享", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun batchInstallApk() {
+        if (savedApks.isEmpty()) {
+            Toast.makeText(this, "没有可安装的 APK", Toast.LENGTH_SHORT).show()
+            return
+        }
+        Toast.makeText(this, "逐个安装 APK", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun batchDeleteApk() {
+        if (savedApks.isEmpty()) {
+            Toast.makeText(this, "没有可删除的 APK", Toast.LENGTH_SHORT).show()
+            return
+        }
+        AlertDialog.Builder(this)
+            .setTitle("批量删除")
+            .setMessage("确定要删除所有 ${savedApks.size} 个保存的 APK 吗？")
+            .setPositiveButton("确定") { _, _ -&gt;
+                savedApks.forEach { apk -&gt;
+                    apk.apkPath?.let { path -&gt;
+                        try {
+                            File(path).delete()
+                        } catch (e: Exception) {
+                            LogUtils.e("Failed to delete $path", e)
+                        }
+                    }
+                }
+                savedApks.clear()
+                saveSavedApks()
+                updateFragments()
+                Toast.makeText(this, "已删除所有 APK", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun exportAppList() {
+        scope.launch {
+            try {
+                val exportDir = File(getExternalFilesDir(null), "exports")
+                FileUtils.ensureDirectoryExists(exportDir)
+                val sdf = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
+                val exportFile = File(exportDir, "app_list_${sdf.format(Date())}.csv")
+                
+                FileWriter(exportFile).use { writer -&gt;
+                    writer.append("应用名称,包名,版本,版本代码,大小\n")
+                    val listToUse = if (filteredApps.isEmpty()) originalApps else filteredApps
+                    listToUse.forEach { app -&gt;
+                        writer.append("${app.toCsvString()}\n")
+                    }
+                }
+                
+                Toast.makeText(this@MainActivity, "已导出到: ${exportFile.absolutePath}", Toast.LENGTH_LONG).show()
+            } catch (e: Exception) {
+                Toast.makeText(this@MainActivity, "导出失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                LogUtils.e("Export failed", e)
+            }
+        }
+    }
+
+    fun showHelpDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("AppCloner 3.1 - 使用指南")
+            .setMessage("""
 📱 应用管理
 • 查看所有已安装应用
 • 查看应用详细信息
 • 快速启动应用
+• 收藏常用应用
 
 🔍 搜索和排序
 • 按名称搜索应用
-• 多种排序方式
+• 多种排序方式（收藏优先）
 • 深色/浅色主题
 
-💾 APK操作
+💾 APK 操作
 • 保存APK文件
 • 分享APK给朋友
 • 安装已保存的APK
+• 批量保存和删除
 
 🔄 克隆功能
 • 创建应用克隆
 • 无限数量克隆
-• 批量选择操作
+
+📋 批量操作
+• 批量收藏
+• 批量保存APK
+• 导出应用列表
 
 ⚠️ 注意
-专业的APK克隆需要：
-1. APKTool - APK反编译工具
-2. Uber Apk Signer - APK签名工具
-3. Android SDK - 构建工具
-
+专业的APK克隆需要APKTool工具支持，
 更好的效果请使用设备的内置克隆功能！
             """.trimIndent())
             .setPositiveButton("确定", null)
@@ -616,8 +836,8 @@ AppCloner 3.0 功能：
     fun showDeleteConfirmDialog(appInfo: AppInfo) {
         AlertDialog.Builder(this)
             .setTitle("删除？")
-            .setMessage("删除这个已保存的APK？")
-            .setPositiveButton("删除") { _, _ ->
+            .setMessage("删除这个已保存的APK吗？")
+            .setPositiveButton("删除") { _, _ -&gt;
                 try {
                     if (appInfo.apkPath != null) {
                         File(appInfo.apkPath).delete()
@@ -635,17 +855,18 @@ AppCloner 3.0 功能：
     }
 
     private fun updateFragments() {
-        val viewPager = findViewById<androidx.viewpager2.widget.ViewPager2>(R.id.viewPager)
-        if (viewPager != null && viewPagerAdapter != null) {
+        val viewPager = findViewById&lt;androidx.viewpager2.widget.ViewPager2&gt;(R.id.viewPager)
+        if (viewPager != null &amp;&amp; viewPagerAdapter != null) {
             viewPagerAdapter.getFragment(0).updateAppList(if (filteredApps.isEmpty()) originalApps else filteredApps)
             viewPagerAdapter.getFragment(1).updateAppList(savedApks)
+            viewPagerAdapter.getFragment(2).updateAppList(originalApps.filter { favoriteApps.contains(it.packageName) })
         }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_CODE_INSTALL) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && packageManager.canRequestPackageInstalls()) {
+            if (Build.VERSION.SDK_INT &gt;= Build.VERSION_CODES.O &amp;&amp; packageManager.canRequestPackageInstalls()) {
                 Toast.makeText(this, "权限已获取 - 重试", Toast.LENGTH_SHORT).show()
             }
         }

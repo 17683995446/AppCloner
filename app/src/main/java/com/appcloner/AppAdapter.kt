@@ -16,7 +16,8 @@ class AppAdapter(
     private val onInstallClick: (AppInfo) -&gt; Unit,
     private val onDeleteClick: (AppInfo) -&gt; Unit,
     private val onLaunchClick: (AppInfo) -&gt; Unit,
-    private val onDetailClick: (AppInfo) -&gt; Unit
+    private val onDetailClick: (AppInfo) -&gt; Unit,
+    private val onFavoriteClick: (AppInfo) -&gt; Unit = {}
 ) : RecyclerView.Adapter&lt;AppAdapter.AppViewHolder&gt;() {
 
     inner class AppViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -26,6 +27,7 @@ class AppAdapter(
         val actionButton1: Button = itemView.findViewById(R.id.actionButton1)
         val actionButton2: Button? = itemView.findViewById(R.id.actionButton2)
         val actionButton3: Button? = itemView.findViewById(R.id.actionButton3)
+        val favoriteButton: Button? = itemView.findViewById(R.id.favoriteButton)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AppViewHolder {
@@ -48,6 +50,7 @@ class AppAdapter(
             
             holder.actionButton2?.visibility = View.VISIBLE
             holder.actionButton3?.visibility = View.VISIBLE
+            holder.favoriteButton?.visibility = View.GONE
             
             holder.actionButton1.setOnClickListener {
                 onInstallClick(app)
@@ -67,13 +70,18 @@ class AppAdapter(
             }
         } else {
             holder.appName.text = app.appName
-            holder.packageName.text = "${app.packageName}\n${app.versionName} - ${app.getFormattedSize()}"
+            val versionInfo = if (app.versionName.isNotEmpty()) "v${app.versionName}" else ""
+            val sizeInfo = app.getFormattedSize()
+            holder.packageName.text = "${app.packageName}\n$versionInfo • $sizeInfo"
+            
             holder.actionButton1.text = "克隆"
             holder.actionButton2?.text = "启动"
             holder.actionButton3?.text = "详情"
+            holder.favoriteButton?.text = if (app.isFavorite) "★" else "☆"
             
             holder.actionButton2?.visibility = View.VISIBLE
             holder.actionButton3?.visibility = View.VISIBLE
+            holder.favoriteButton?.visibility = View.VISIBLE
             
             holder.actionButton1.setOnClickListener {
                 onSaveClick(app)
@@ -85,6 +93,10 @@ class AppAdapter(
             
             holder.actionButton3?.setOnClickListener {
                 onDetailClick(app)
+            }
+            
+            holder.favoriteButton?.setOnClickListener {
+                onFavoriteClick(app)
             }
             
             holder.itemView.setOnLongClickListener(null)

@@ -1,3 +1,4 @@
+
 package com.appcloner
 
 import androidx.fragment.app.Fragment
@@ -8,7 +9,8 @@ class ViewPagerAdapter(fragmentActivity: FragmentActivity) : FragmentStateAdapte
 
     private val fragments = listOf(
         AppListFragment.newInstance(false),
-        AppListFragment.newInstance(true)
+        AppListFragment.newInstance(true),
+        AppListFragment.newInstance(false)
     )
 
     override fun getItemCount(): Int = fragments.size

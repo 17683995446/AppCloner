@@ -16,7 +16,8 @@ data class AppInfo(
     val versionCode: Long = 0,
     val installTime: Long = 0,
     val updateTime: Long = 0,
-    val apkSize: Long = 0
+    val apkSize: Long = 0,
+    var isFavorite: Boolean = false
 ) {
     fun getFormattedSize(): String {
         return if (apkSize > 0) {
@@ -24,5 +25,9 @@ data class AppInfo(
         } else {
             "未知"
         }
+    }
+    
+    fun toCsvString(): String {
+        return "\"$appName\",\"$packageName\",\"$versionName\",$versionCode,${getFormattedSize()}"
     }
 }

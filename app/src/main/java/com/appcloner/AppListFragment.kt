@@ -64,6 +64,9 @@ class AppListFragment : Fragment() {
             },
             onDetailClick = { app -&gt;
                 (activity as? MainActivity)?.showAppDetails(app)
+            },
+            onFavoriteClick = { app -&gt;
+                (activity as? MainActivity)?.toggleFavorite(app)
             }
         )
         
