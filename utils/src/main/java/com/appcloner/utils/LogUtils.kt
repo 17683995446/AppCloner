@@ -2,64 +2,91 @@
 package com.appcloner.utils
 
 import android.util.Log
+import java.io.File
+import java.io.FileWriter
+import java.text.SimpleDateFormat
+import java.util.*
 
-/**
- * 日志工具类
- * 产品化设计：支持不同级别的日志、生产/开发环境配置
- */
 object LogUtils {
 
-    enum class LogLevel {
-        VERBOSE, DEBUG, INFO, WARN, ERROR
-    }
-
-    private var isDebugMode = true
     private var defaultTag = "AppCloner"
+    private var isLoggingEnabled = true
+    private var isFileLoggingEnabled = false
+    private val logFile: File? = null
+    
+    private val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault())
 
-    /**
-     * 设置是否调试模式
-     */
-    fun setDebugMode(debug: Boolean) {
-        isDebugMode = debug
-    }
-
-    /**
-     * 设置默认TAG
-     */
     fun setDefaultTag(tag: String) {
         defaultTag = tag
     }
 
-    // VERBOSE
-    fun v(message: String, tag: String = defaultTag) {
-        if (isDebugMode) {
-            Log.v(tag, message)
-        }
+    fun setFileLogging(enabled: Boolean, file: File? = null) {
+        isFileLoggingEnabled = enabled
     }
 
-    // DEBUG
-    fun d(message: String, tag: String = defaultTag) {
-        if (isDebugMode) {
+    fun d(tag: String = defaultTag, message: String) {
+        if (isLoggingEnabled) {
             Log.d(tag, message)
+            writeToFile("DEBUG", tag, message)
         }
     }
 
-    // INFO
-    fun i(message: String, tag: String = defaultTag) {
-        Log.i(tag, message)
-    }
-
-    // WARN
-    fun w(message: String, tag: String = defaultTag) {
-        Log.w(tag, message)
-    }
-
-    // ERROR
-    fun e(message: String, exception: Throwable? = null, tag: String = defaultTag) {
-        if (exception != null) {
-            Log.e(tag, message, exception)
-        } else {
-            Log.e(tag, message)
+    fun i(tag: String = defaultTag, message: String) {
+        if (isLoggingEnabled) {
+            Log.i(tag, message)
+            writeToFile("INFO", tag, message)
         }
+    }
+
+    fun w(tag: String = defaultTag, message: String) {
+        if (isLoggingEnabled) {
+            Log.w(tag, message)
+            writeToFile("WARN", tag, message)
+        }
+    }
+
+    fun e(tag: String = defaultTag, message: String, throwable: Throwable? = null) {
+        if (isLoggingEnabled) {
+            if (throwable != null) {
+                Log.e(tag, message, throwable)
+            } else {
+                Log.e(tag, message)
+            }
+            writeToFile("ERROR", tag, message, throwable)
+        }
+    }
+
+    fun v(tag: String = defaultTag, message: String) {
+        if (isLoggingEnabled) {
+            Log.v(tag, message)
+            writeToFile("VERBOSE", tag, message)
+        }
+    }
+
+    private fun writeToFile(level: String, tag: String, message: String, throwable: Throwable? = null) {
+        if (isFileLoggingEnabled && logFile != null) {
+            try {
+                val logEntry = buildString {
+                    append("[${dateFormat.format(Date())}] ")
+                    append("[$level] ")
+                    append("[$tag] ")
+                    append(message)
+                    if (throwable != null) {
+                        append("\n")
+                        append(Log.getStackTraceString(throwable))
+                    }
+                }
+                
+                FileWriter(logFile, true).use { writer ->
+                    writer.appendLine(logEntry)
+                }
+            } catch (e: Exception) {
+                Log.e("LogUtils", "Failed to write to log file", e)
+            }
+        }
+    }
+
+    fun clearLogs() {
+        logFile?.delete()
     }
 }
