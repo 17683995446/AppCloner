@@ -1,0 +1,257 @@
+
+&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/md_theme_light_background"&gt;
+
+    &lt;LinearLayout
+        android:id="@+id/analysisContent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp"&gt;
+
+        &lt;com.google.android.material.textview.MaterialTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="App Analysis"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="@color/md_theme_light_onBackground"/&gt;
+
+        &lt;com.google.android.material.divider.MaterialDivider
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"/&gt;
+
+        &lt;com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="1dp"
+            app:strokeColor="@color/md_theme_light_outline"
+            app:strokeWidth="1dp"&gt;
+
+            &lt;LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp"&gt;
+
+                &lt;com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/appName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/md_theme_light_onSurface"/&gt;
+
+                &lt;com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/packageName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textSize="12sp"
+                    android:textColor="@color/md_theme_light_onSurfaceVariant"/&gt;
+
+                &lt;com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginBottom="16dp"/&gt;
+
+                &lt;com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/versionInfo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:textColor="@color/md_theme_light_onSurface"/&gt;
+
+                &lt;com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/sdkInfo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textSize="14sp"
+                    android:textColor="@color/md_theme_light_onSurface"/&gt;
+
+                &lt;com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/sizeInfo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textSize="14sp"
+                    android:textColor="@color/md_theme_light_onSurface"/&gt;
+
+                &lt;com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/timeInfo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textSize="14sp"
+                    android:textColor="@color/md_theme_light_onSurface"/&gt;
+
+                &lt;com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/flagsInfo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textSize="14sp"
+                    android:textColor="@color/md_theme_light_onSurface"/&gt;
+
+            &lt;/LinearLayout&gt;
+
+        &lt;/com.google.android.material.card.MaterialCardView&gt;
+
+        &lt;com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="1dp"
+            app:strokeColor="@color/md_theme_light_outline"
+            app:strokeWidth="1dp"&gt;
+
+            &lt;LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp"&gt;
+
+                &lt;com.google.android.material.textview.MaterialTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Permissions"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/md_theme_light_onSurface"/&gt;
+
+                &lt;com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/permSummary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textSize="14sp"
+                    android:textColor="@color/md_theme_light_onSurfaceVariant"/&gt;
+
+                &lt;LinearLayout
+                    android:id="@+id/permListLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="12dp"/&gt;
+
+            &lt;/LinearLayout&gt;
+
+        &lt;/com.google.android.material.card.MaterialCardView&gt;
+
+        &lt;com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="1dp"
+            app:strokeColor="@color/md_theme_light_outline"
+            app:strokeWidth="1dp"&gt;
+
+            &lt;LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp"&gt;
+
+                &lt;com.google.android.material.textview.MaterialTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Components"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/md_theme_light_onSurface"/&gt;
+
+                &lt;com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/compSummary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textSize="14sp"
+                    android:textColor="@color/md_theme_light_onSurfaceVariant"/&gt;
+
+            &lt;/LinearLayout&gt;
+
+        &lt;/com.google.android.material.card.MaterialCardView&gt;
+
+        &lt;com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="1dp"
+            app:strokeColor="@color/md_theme_light_outline"
+            app:strokeWidth="1dp"&gt;
+
+            &lt;LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp"&gt;
+
+                &lt;com.google.android.material.textview.MaterialTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Features"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/md_theme_light_onSurface"/&gt;
+
+                &lt;LinearLayout
+                    android:id="@+id/featuresLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="12dp"/&gt;
+
+            &lt;/LinearLayout&gt;
+
+        &lt;/com.google.android.material.card.MaterialCardView&gt;
+
+        &lt;com.google.android.material.button.MaterialButton
+            android:id="@+id/closeButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Close"
+            android:layout_gravity="end"
+            style="@style/Widget.Material3.Button.OutlinedButton"/&gt;
+
+    &lt;/LinearLayout&gt;
+
+    &lt;LinearLayout
+        android:id="@+id/errorLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:gravity="center"
+        android:visibility="gone"&gt;
+
+        &lt;com.google.android.material.textview.MaterialTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Failed to load app analysis"
+            android:textSize="16sp"
+            android:textColor="@color/md_theme_light_error"/&gt;
+
+        &lt;com.google.android.material.button.MaterialButton
+            android:id="@+id/closeButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Close"
+            android:layout_marginTop="16dp"
+            style="@style/Widget.Material3.Button"/&gt;
+
+    &lt;/LinearLayout&gt;
+
+&lt;/ScrollView&gt;

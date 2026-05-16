@@ -1,10 +1,63 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <style name="Theme.AppCloner" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
-        <item name="colorPrimary">@color/primary</item>
-        <item name="colorPrimaryVariant">@color/primary_dark</item>
-        <item name="colorOnPrimary">@color/white</item>
-        <item name="colorSecondary">@color/accent</item>
-        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
-    </style>
-</resources>
+
+&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;resources&gt;
+    &lt;style name="Theme.AppCloner" parent="Theme.Material3.DayNight.NoActionBar"&gt;
+        &lt;item name="colorPrimary"&gt;@color/md_theme_light_primary&lt;/item&gt;
+        &lt;item name="colorOnPrimary"&gt;@color/md_theme_light_onPrimary&lt;/item&gt;
+        &lt;item name="colorPrimaryContainer"&gt;@color/md_theme_light_primaryContainer&lt;/item&gt;
+        &lt;item name="colorOnPrimaryContainer"&gt;@color/md_theme_light_onPrimaryContainer&lt;/item&gt;
+        &lt;item name="colorSecondary"&gt;@color/md_theme_light_secondary&lt;/item&gt;
+        &lt;item name="colorOnSecondary"&gt;@color/md_theme_light_onSecondary&lt;/item&gt;
+        &lt;item name="colorSecondaryContainer"&gt;@color/md_theme_light_secondaryContainer&lt;/item&gt;
+        &lt;item name="colorOnSecondaryContainer"&gt;@color/md_theme_light_onSecondaryContainer&lt;/item&gt;
+        &lt;item name="colorTertiary"&gt;@color/md_theme_light_tertiary&lt;/item&gt;
+        &lt;item name="colorOnTertiary"&gt;@color/md_theme_light_onTertiary&lt;/item&gt;
+        &lt;item name="colorTertiaryContainer"&gt;@color/md_theme_light_tertiaryContainer&lt;/item&gt;
+        &lt;item name="colorOnTertiaryContainer"&gt;@color/md_theme_light_onTertiaryContainer&lt;/item&gt;
+        &lt;item name="colorError"&gt;@color/md_theme_light_error&lt;/item&gt;
+        &lt;item name="colorOnError"&gt;@color/md_theme_light_onError&lt;/item&gt;
+        &lt;item name="colorErrorContainer"&gt;@color/md_theme_light_errorContainer&lt;/item&gt;
+        &lt;item name="colorOnErrorContainer"&gt;@color/md_theme_light_onErrorContainer&lt;/item&gt;
+        &lt;item name="colorOutline"&gt;@color/md_theme_light_outline&lt;/item&gt;
+        &lt;item name="android:colorBackground"&gt;@color/md_theme_light_background&lt;/item&gt;
+        &lt;item name="colorOnBackground"&gt;@color/md_theme_light_onBackground&lt;/item&gt;
+        &lt;item name="android:colorSurface"&gt;@color/md_theme_light_surface&lt;/item&gt;
+        &lt;item name="colorOnSurface"&gt;@color/md_theme_light_onSurface&lt;/item&gt;
+        &lt;item name="colorSurfaceVariant"&gt;@color/md_theme_light_surfaceVariant&lt;/item&gt;
+        &lt;item name="colorOnSurfaceVariant"&gt;@color/md_theme_light_onSurfaceVariant&lt;/item&gt;
+        
+        &lt;item name="android:windowBackground"&gt;@color/md_theme_light_background&lt;/item&gt;
+        &lt;item name="android:statusBarColor"&gt;@android:color/transparent&lt;/item&gt;
+        &lt;item name="android:navigationBarColor"&gt;@android:color/transparent&lt;/item&gt;
+    &lt;/style&gt;
+
+    &lt;style name="Theme.AppCloner.Dark" parent="Theme.Material3.DayNight.NoActionBar"&gt;
+        &lt;item name="colorPrimary"&gt;@color/md_theme_dark_primary&lt;/item&gt;
+        &lt;item name="colorOnPrimary"&gt;@color/md_theme_dark_onPrimary&lt;/item&gt;
+        &lt;item name="colorPrimaryContainer"&gt;@color/md_theme_dark_primaryContainer&lt;/item&gt;
+        &lt;item name="colorOnPrimaryContainer"&gt;@color/md_theme_dark_onPrimaryContainer&lt;/item&gt;
+        &lt;item name="colorSecondary"&gt;@color/md_theme_dark_secondary&lt;/item&gt;
+        &lt;item name="colorOnSecondary"&gt;@color/md_theme_dark_onSecondary&lt;/item&gt;
+        &lt;item name="colorSecondaryContainer"&gt;@color/md_theme_dark_secondaryContainer&lt;/item&gt;
+        &lt;item name="colorOnSecondaryContainer"&gt;@color/md_theme_dark_onSecondaryContainer&lt;/item&gt;
+        &lt;item name="colorTertiary"&gt;@color/md_theme_dark_tertiary&lt;/item&gt;
+        &lt;item name="colorOnTertiary"&gt;@color/md_theme_dark_onTertiary&lt;/item&gt;
+        &lt;item name="colorTertiaryContainer"&gt;@color/md_theme_dark_tertiaryContainer&lt;/item&gt;
+        &lt;item name="colorOnTertiaryContainer"&gt;@color/md_theme_dark_onTertiaryContainer&lt;/item&gt;
+        &lt;item name="colorError"&gt;@color/md_theme_dark_error&lt;/item&gt;
+        &lt;item name="colorOnError"&gt;@color/md_theme_dark_onError&lt;/item&gt;
+        &lt;item name="colorErrorContainer"&gt;@color/md_theme_dark_errorContainer&lt;/item&gt;
+        &lt;item name="colorOnErrorContainer"&gt;@color/md_theme_dark_onErrorContainer&lt;/item&gt;
+        &lt;item name="colorOutline"&gt;@color/md_theme_dark_outline&lt;/item&gt;
+        &lt;item name="android:colorBackground"&gt;@color/md_theme_dark_background&lt;/item&gt;
+        &lt;item name="colorOnBackground"&gt;@color/md_theme_dark_onBackground&lt;/item&gt;
+        &lt;item name="android:colorSurface"&gt;@color/md_theme_dark_surface&lt;/item&gt;
+        &lt;item name="colorOnSurface"&gt;@color/md_theme_dark_onSurface&lt;/item&gt;
+        &lt;item name="colorSurfaceVariant"&gt;@color/md_theme_dark_surfaceVariant&lt;/item&gt;
+        &lt;item name="colorOnSurfaceVariant"&gt;@color/md_theme_dark_onSurfaceVariant&lt;/item&gt;
+        
+        &lt;item name="android:windowBackground"&gt;@color/md_theme_dark_background&lt;/item&gt;
+        &lt;item name="android:statusBarColor"&gt;@android:color/transparent&lt;/item&gt;
+        &lt;item name="android:navigationBarColor"&gt;@android:color/transparent&lt;/item&gt;
+    &lt;/style&gt;
+&lt;/resources&gt;
