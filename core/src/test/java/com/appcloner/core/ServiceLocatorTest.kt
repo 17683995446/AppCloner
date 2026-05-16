@@ -1,50 +1,60 @@
 
 package com.appcloner.core
 
-import io.mockk.*
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.Assert.*
+import org.mockito.Mock
+import org.mockito.MockitoAnnotations
+import android.content.Context
 
-/**
- * ServiceLocator 单元测试
- */
 class ServiceLocatorTest {
 
-    private lateinit var mockContext: android.content.Context
+    @Mock
+    private lateinit var mockContext: Context
 
     @Before
     fun setup() {
-        mockContext = mockk(relaxed = true)
+        MockitoAnnotations.openMocks(this)
+    }
+
+    @After
+    fun tearDown() {
+        com.appcloner.di.ServiceLocator.reset()
     }
 
     @Test
-    fun `test getInstance returns same instance`() {
-        // When
-        val instance1 = ServiceLocator.getInstance(mockContext)
-        val instance2 = ServiceLocator.getInstance(mockContext)
+    fun `test service locator singleton pattern`() {
+        val instance1 = com.appcloner.di.ServiceLocator.provideRepository(mockContext)
+        val instance2 = com.appcloner.di.ServiceLocator.provideRepository(mockContext)
         
-        // Then
         assertSame(instance1, instance2)
     }
 
     @Test
-    fun `test cloneManager is lazy initialized`() {
-        // When
-        val locator = ServiceLocator.getInstance(mockContext)
-        val cloneManager = locator.cloneManager
+    fun `test reset service locator`() {
+        val instance1 = com.appcloner.di.ServiceLocator.provideRepository(mockContext)
+        com.appcloner.di.ServiceLocator.reset()
+        val instance2 = com.appcloner.di.ServiceLocator.provideRepository(mockContext)
         
-        // Then
-        assertNotNull(cloneManager)
+        assertNotSame(instance1, instance2)
     }
 
     @Test
-    fun `test preferencesManager is lazy initialized`() {
-        // When
-        val locator = ServiceLocator.getInstance(mockContext)
-        val prefsManager = locator.preferencesManager
+    fun `test all services can be provided`() {
+        val repo = com.appcloner.di.ServiceLocator.provideRepository(mockContext)
+        val cloneManager = com.appcloner.di.ServiceLocator.provideCloneManager(mockContext)
+        val appAnalyzer = com.appcloner.di.ServiceLocator.provideAppAnalyzer()
+        val apkViewer = com.appcloner.di.ServiceLocator.provideApkResourceViewer()
+        val batchCloneManager = com.appcloner.di.ServiceLocator.provideBatchCloneManager(mockContext)
+        val permissionAuditTool = com.appcloner.di.ServiceLocator.providePermissionAuditTool()
         
-        // Then
-        assertNotNull(prefsManager)
+        assertNotNull(repo)
+        assertNotNull(cloneManager)
+        assertNotNull(appAnalyzer)
+        assertNotNull(apkViewer)
+        assertNotNull(batchCloneManager)
+        assertNotNull(permissionAuditTool)
     }
 }

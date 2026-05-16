@@ -1,0 +1,40 @@
+
+&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="8dp"
+    android:background="@android:color/white"
+    android:gravity="center"&gt;
+
+    &lt;TextView
+        android:id="@+id/widget_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="AppCloner 8.0"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp" /&gt;
+
+    &lt;LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"&gt;
+
+        &lt;Button
+            android:id="@+id/widget_open_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="打开"
+            android:layout_marginEnd="4dp" /&gt;
+
+        &lt;Button
+            android:id="@+id/widget_clone_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="快速克隆" /&gt;
+
+    &lt;/LinearLayout&gt;
+
+&lt;/LinearLayout&gt;

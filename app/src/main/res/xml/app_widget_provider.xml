@@ -1,0 +1,10 @@
+
+&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="180dp"
+    android:minHeight="110dp"
+    android:updatePeriodMillis="86400000"
+    android:initialLayout="@layout/widget_app_cloner"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen"&gt;
+&lt;/appwidget-provider&gt;
