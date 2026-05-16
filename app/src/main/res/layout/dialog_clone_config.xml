@@ -1,0 +1,109 @@
+
+&lt;LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@color/background"&gt;
+
+    &lt;TextView
+        android:id="@+id/tvTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="克隆配置"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="@color/text_primary"
+        android:layout_marginBottom="12dp"/&gt;
+
+    &lt;TextView
+        android:id="@+id/tvOriginalApp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="14sp"
+        android:textColor="@color/text_secondary"
+        android:layout_marginBottom="16dp"/&gt;
+
+    &lt;TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="新包名"
+        android:textSize="14sp"
+        android:textColor="@color/text_primary"
+        android:layout_marginBottom="4dp"/&gt;
+
+    &lt;EditText
+        android:id="@+id/etPackageName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="com.example.app.clone"
+        android:inputType="textNoSuggestions"
+        android:textSize="14sp"
+        android:layout_marginBottom="12dp"/&gt;
+
+    &lt;TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="新应用名称"
+        android:textSize="14sp"
+        android:textColor="@color/text_primary"
+        android:layout_marginBottom="4dp"/&gt;
+
+    &lt;EditText
+        android:id="@+id/etAppName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="应用名称 (Clone)"
+        android:textSize="14sp"
+        android:layout_marginBottom="16dp"/&gt;
+
+    &lt;CheckBox
+        android:id="@+id/cbCopyData"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="复制应用数据"
+        android:textSize="14sp"
+        android:textColor="@color/text_primary"
+        android:layout_marginBottom="8dp"/&gt;
+
+    &lt;CheckBox
+        android:id="@+id/cbKeepIcon"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="保持原图标"
+        android:textSize="14sp"
+        android:textColor="@color/text_primary"
+        android:layout_marginBottom="16dp"/&gt;
+
+    &lt;LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end"&gt;
+
+        &lt;Button
+            android:id="@+id/btnGenerate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="生成"
+            android:textSize="14sp"
+            android:layout_marginEnd="8dp"/&gt;
+
+        &lt;Button
+            android:id="@+id/btnCancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="取消"
+            android:textSize="14sp"
+            android:layout_marginEnd="8dp"/&gt;
+
+        &lt;Button
+            android:id="@+id/btnConfirm"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="确认克隆"
+            android:textSize="14sp"/&gt;
+
+    &lt;/LinearLayout&gt;
+
+&lt;/LinearLayout&gt;

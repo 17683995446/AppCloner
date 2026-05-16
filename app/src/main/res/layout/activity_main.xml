@@ -26,7 +26,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="AppCloner 3.0"
+                android:text="AppCloner 4.0"
                 android:textSize="20sp"
                 android:textStyle="bold"
                 android:textColor="@color/text_primary" /&gt;
@@ -54,6 +54,14 @@
                 android:layout_height="wrap_content"
                 android:contentDescription="Batch"
                 app:icon="@android:drawable/ic_menu_select_all" /&gt;
+
+            &lt;com.google.android.material.button.MaterialButton
+                android:id="@+id/settingsBtn"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:contentDescription="Settings"
+                app:icon="@android:drawable/ic_menu_preferences" /&gt;
 
             &lt;com.google.android.material.button.MaterialButton
                 android:id="@+id/helpBtn"
