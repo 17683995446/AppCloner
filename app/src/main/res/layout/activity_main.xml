@@ -1,59 +1,96 @@
-<?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background"
-    tools:context=".MainActivity">
+    tools:context=".MainActivity"&gt;
 
-    <com.google.android.material.appbar.AppBarLayout
+    &lt;com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toTopOf="parent"
-        app:elevation="0dp">
+        app:elevation="0dp"&gt;
 
-        <LinearLayout
+        &lt;LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:padding="12dp"
-            android:gravity="center_vertical">
+            android:gravity="center_vertical"&gt;
 
-            <TextView
+            &lt;TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="APK Manager"
+                android:text="AppCloner 3.0"
                 android:textSize="20sp"
                 android:textStyle="bold"
-                android:textColor="@color/text_primary" />
+                android:textColor="@color/text_primary" /&gt;
 
-            <com.google.android.material.button.MaterialButton
+            &lt;com.google.android.material.button.MaterialButton
+                android:id="@+id/themeBtn"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:contentDescription="Theme"
+                app:icon="@android:drawable/ic_menu_edit" /&gt;
+
+            &lt;com.google.android.material.button.MaterialButton
+                android:id="@+id/sortBtn"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:contentDescription="Sort"
+                app:icon="@android:drawable/ic_menu_sort_by_size" /&gt;
+
+            &lt;com.google.android.material.button.MaterialButton
+                android:id="@+id/batchBtn"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:contentDescription="Batch"
+                app:icon="@android:drawable/ic_menu_select_all" /&gt;
+
+            &lt;com.google.android.material.button.MaterialButton
                 android:id="@+id/helpBtn"
                 style="@style/Widget.Material3.Button.IconButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:contentDescription="Help"
-                app:icon="@android:drawable/ic_menu_help" />
+                app:icon="@android:drawable/ic_menu_help" /&gt;
 
-        </LinearLayout>
+        &lt;/LinearLayout&gt;
 
-        <com.google.android.material.tabs.TabLayout
+        &lt;EditText
+            android:id="@+id/searchEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp"
+            android:layout_marginBottom="8dp"
+            android:hint="搜索应用..."
+            android:padding="12dp"
+            android:background="@android:drawable/edit_text"
+            android:textColorHint="@color/text_secondary" /&gt;
+
+        &lt;com.google.android.material.tabs.TabLayout
             android:id="@+id/tabLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:tabSelectedTextColor="@color/primary"
-            app:tabTextColor="@color/text_secondary" />
+            app:tabTextColor="@color/text_secondary" /&gt;
 
-    </com.google.android.material.appbar.AppBarLayout>
+    &lt;/com.google.android.material.appbar.AppBarLayout&gt;
 
-    <androidx.viewpager2.widget.ViewPager2
+    &lt;androidx.viewpager2.widget.ViewPager2
         android:id="@+id/viewPager"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/appBarLayout" />
+        app:layout_constraintTop_toBottomOf="@id/appBarLayout" /&gt;
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+&lt;/androidx.constraintlayout.widget.ConstraintLayout&gt;

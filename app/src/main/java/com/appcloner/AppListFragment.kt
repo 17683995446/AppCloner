@@ -58,6 +58,12 @@ class AppListFragment : Fragment() {
             },
             onDeleteClick = { app -&gt;
                 (activity as? MainActivity)?.showDeleteConfirmDialog(app)
+            },
+            onLaunchClick = { app -&gt;
+                (activity as? MainActivity)?.launchApp(app)
+            },
+            onDetailClick = { app -&gt;
+                (activity as? MainActivity)?.showAppDetails(app)
             }
         )
         
