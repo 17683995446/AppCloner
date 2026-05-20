@@ -5,9 +5,9 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.os.Environment
 import android.text.format.Formatter
-import com.appcloner.AppInfo
-import com.appcloner.data.model.CloneHistory
-import com.appcloner.data.model.CloneTemplate
+import com.appcloner.core.model.AppInfo
+import com.appcloner.core.model.CloneHistory
+import com.appcloner.core.model.CloneTemplate
 import com.appcloner.utils.LogUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay

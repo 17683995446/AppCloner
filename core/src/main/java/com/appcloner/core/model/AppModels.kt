@@ -141,3 +141,98 @@ enum class CloneStage {
     FAILED
 }
 
+/**
+ * 应用分析 - 完整应用信息分析
+ */
+data class AppAnalysis(
+    val appName: String,
+    val packageName: String,
+    val isSystemApp: Boolean,
+    val permissions: List<String>,
+    val dangerousPermissions: List<String>,
+    val activities: List<String>,
+    val services: List<String>,
+    val receivers: List<String>,
+    val providers: List<String>,
+    val versionName: String,
+    val versionCode: Long,
+    val installTime: Long,
+    val updateTime: Long,
+    val apkSize: Long,
+    val targetSdkVersion: Int,
+    val minSdkVersion: Int,
+    val isDebuggable: Boolean,
+    val nativeLibraries: List<String>,
+    val signatures: List<String>?
+) {
+    fun getPermissionStats(): PermissionStats {
+        return PermissionStats(
+            totalPermissions = permissions.size,
+            dangerousPermissions = dangerousPermissions.size,
+            permissionGroups = permissions.groupBy {
+                it.split(".").lastOrNull() ?: it
+            }.keys.toList()
+        )
+    }
+    
+    fun getFormattedSize(context: android.content.Context): String {
+        return android.text.format.Formatter.formatFileSize(context, apkSize)
+    }
+    
+    fun hasFeature(feature: AppFeature): Boolean {
+        return when (feature) {
+            AppFeature.ACTIVITIES -> activities.isNotEmpty()
+            AppFeature.SERVICES -> services.isNotEmpty()
+            AppFeature.RECEIVERS -> receivers.isNotEmpty()
+            AppFeature.PROVIDERS -> providers.isNotEmpty()
+            AppFeature.NATIVE_LIBS -> nativeLibraries.isNotEmpty()
+        }
+    }
+}
+
+/**
+ * 权限统计 - 应用权限统计信息
+ */
+data class PermissionStats(
+    val totalPermissions: Int,
+    val dangerousPermissions: Int,
+    val permissionGroups: List<String>
+)
+
+/**
+ * 应用特性 - 用于分析应用功能
+ */
+enum class AppFeature {
+    ACTIVITIES,
+    SERVICES,
+    RECEIVERS,
+    PROVIDERS,
+    NATIVE_LIBS
+}
+
+/**
+ * 应用对比 - 两个应用的对比结果
+ */
+data class AppComparison(
+    val app1: AppAnalysis?,
+    val app2: AppAnalysis?,
+    val hasSameTargetSdk: Boolean,
+    val hasSameMinSdk: Boolean,
+    val hasSimilarPermissions: Boolean,
+    val sizeDifference: Long
+)
+
+/**
+ * 克隆模板 - 克隆配置模板
+ */
+data class CloneTemplate(
+    val id: Long = 0,
+    val name: String,
+    val description: String,
+    val packageNamePattern: String,
+    val customSettings: String,
+    val createdAt: Long,
+    val isDefault: Boolean = false,
+    val usageCount: Int = 0
+)
+

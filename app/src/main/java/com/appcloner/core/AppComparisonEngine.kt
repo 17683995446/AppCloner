@@ -3,7 +3,7 @@ package com.appcloner.core
 
 import android.content.Context
 import android.text.format.Formatter
-import com.appcloner.data.model.AppAnalysis
+import com.appcloner.core.model.AppAnalysis
 import com.appcloner.utils.LogUtils
 import java.io.File
 
@@ -12,8 +12,8 @@ class AppComparisonEngine(private val context: Context) {
     private val appAnalyzer = AppAnalyzer
 
     data class ComparisonResult(
-        val app1Info: AppInfo,
-        val app2Info: AppInfo,
+        val app1Info: AppComparisonInfo,
+        val app2Info: AppComparisonInfo,
         val app1Analysis: AppAnalysis?,
         val app2Analysis: AppAnalysis?,
         val versionComparison: VersionComparison,
@@ -24,13 +24,12 @@ class AppComparisonEngine(private val context: Context) {
         val overallScore: Float
     )
 
-    data class AppInfo(
+    data class AppComparisonInfo(
         val packageName: String,
         val appName: String,
         val versionName: String,
         val versionCode: Long,
-        val apkSize: Long,
-        val icon: android.graphics.drawable.Drawable?
+        val apkSize: Long
     )
 
     data class VersionComparison(
@@ -99,26 +98,20 @@ class AppComparisonEngine(private val context: Context) {
                 return null
             }
 
-            val appInfo1 = AppInfo(
+            val appInfo1 = AppComparisonInfo(
                 packageName = packageName1,
                 appName = analysis1.appName,
                 versionName = analysis1.versionName,
                 versionCode = analysis1.versionCode,
-                apkSize = analysis1.apkSize,
-                icon = try {
-                    context.packageManager.getApplicationIcon(packageName1)
-                } catch (e: Exception) { null }
+                apkSize = analysis1.apkSize
             )
 
-            val appInfo2 = AppInfo(
+            val appInfo2 = AppComparisonInfo(
                 packageName = packageName2,
                 appName = analysis2.appName,
                 versionName = analysis2.versionName,
                 versionCode = analysis2.versionCode,
-                apkSize = analysis2.apkSize,
-                icon = try {
-                    context.packageManager.getApplicationIcon(packageName2)
-                } catch (e: Exception) { null }
+                apkSize = analysis2.apkSize
             )
 
             val versionComparison = compareVersions(appInfo1, appInfo2)
@@ -153,7 +146,7 @@ class AppComparisonEngine(private val context: Context) {
         }
     }
 
-    private fun compareVersions(info1: AppInfo, info2: AppInfo): VersionComparison {
+    private fun compareVersions(info1: AppComparisonInfo, info2: AppComparisonInfo): VersionComparison {
         val isSameVersion = info1.versionName == info2.versionName && 
                            info1.versionCode == info2.versionCode
         val newerApp = when {
@@ -172,7 +165,7 @@ class AppComparisonEngine(private val context: Context) {
         )
     }
 
-    private fun compareSizes(info1: AppInfo, info2: AppInfo): SizeComparison {
+    private fun compareSizes(info1: AppComparisonInfo, info2: AppComparisonInfo): SizeComparison {
         val diff = info1.apkSize - info2.apkSize
         val largerApp = when {
             info1.apkSize > info2.apkSize -> 1

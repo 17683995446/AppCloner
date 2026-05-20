@@ -1,8 +1,8 @@
 
 package com.appcloner.core
 
-import com.appcloner.AppInfo
-import com.appcloner.data.model.CloneTemplate
+import com.appcloner.core.model.AppInfo
+import com.appcloner.core.model.CloneTemplate
 import com.appcloner.utils.LogUtils
 import kotlinx.coroutines.*
 import java.io.File

@@ -11,8 +11,8 @@ import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import com.appcloner.R
 import com.appcloner.core.AppAnalyzer
-import com.appcloner.data.model.AppAnalysis
-import com.appcloner.data.model.AppFeature
+import com.appcloner.core.model.AppAnalysis
+import com.appcloner.core.model.AppFeature
 import java.text.SimpleDateFormat
 import java.util.*
 

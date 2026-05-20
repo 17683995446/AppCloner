@@ -2,7 +2,7 @@ package com.appcloner.data.repository
 
 import com.appcloner.data.local.dao.CloneTemplateDao
 import com.appcloner.data.local.entity.CloneTemplateEntity
-import com.appcloner.data.model.CloneTemplate
+import com.appcloner.core.model.CloneTemplate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject

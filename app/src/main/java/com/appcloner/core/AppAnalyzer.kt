@@ -5,8 +5,8 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.content.pm.ApplicationInfo
 import android.os.Build
-import com.appcloner.data.model.AppAnalysis
-import com.appcloner.data.model.PermissionStats
+import com.appcloner.core.model.AppAnalysis
+import com.appcloner.core.model.PermissionStats
 import com.appcloner.utils.LogUtils
 import java.io.File
 
@@ -126,11 +126,11 @@ object AppAnalyzer {
         }
     }
 
-    fun compareApps(context: Context, pkg1: String, pkg2: String): AppComparison {
+    fun compareApps(context: Context, pkg1: String, pkg2: String): com.appcloner.core.model.AppComparison {
         val analysis1 = analyzeApp(context, pkg1)
         val analysis2 = analyzeApp(context, pkg2)
         
-        return AppComparison(
+        return com.appcloner.core.model.AppComparison(
             app1 = analysis1,
             app2 = analysis2,
             hasSameTargetSdk = analysis1?.targetSdkVersion == analysis2?.targetSdkVersion,
@@ -141,12 +141,3 @@ object AppAnalyzer {
         )
     }
 }
-
-data class AppComparison(
-    val app1: AppAnalysis?,
-    val app2: AppAnalysis?,
-    val hasSameTargetSdk: Boolean,
-    val hasSameMinSdk: Boolean,
-    val hasSimilarPermissions: Boolean,
-    val sizeDifference: Long
-)

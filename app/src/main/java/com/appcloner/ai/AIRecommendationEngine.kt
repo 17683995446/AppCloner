@@ -5,8 +5,8 @@ import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
-import com.appcloner.AppInfo
-import com.appcloner.data.model.AppAnalysis
+import com.appcloner.core.model.AppInfo
+import com.appcloner.core.model.AppAnalysis
 import com.appcloner.core.AppAnalyzer
 import java.util.*
 import kotlin.math.abs
