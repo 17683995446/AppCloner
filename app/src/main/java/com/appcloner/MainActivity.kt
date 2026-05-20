@@ -12,6 +12,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.appcloner.core.model.AppInfo
 import com.appcloner.presentation.viewmodel.MainViewModel
+import com.google.android.material.search.SearchBar
+import com.google.android.material.search.SearchView
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -25,6 +27,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var emptyState: View
     private lateinit var emptyTitle: TextView
     private lateinit var emptyDescription: TextView
+    private lateinit var emptyActionButton: View
+    private lateinit var searchBar: SearchBar
     private lateinit var appAdapter: AppAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -32,6 +36,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         setupViews()
+        setupSearch()
         observeViewModel()
         loadApps()
     }
@@ -42,6 +47,8 @@ class MainActivity : AppCompatActivity() {
         emptyState = findViewById(R.id.emptyState)
         emptyTitle = findViewById(R.id.emptyTitle)
         emptyDescription = findViewById(R.id.emptyDescription)
+        emptyActionButton = findViewById(R.id.emptyActionButton)
+        searchBar = findViewById(R.id.searchBar)
 
         appAdapter = AppAdapter(
             onAppClick = { app -> showAppDetails(app) },
@@ -51,6 +58,30 @@ class MainActivity : AppCompatActivity() {
         recyclerView.apply {
             layoutManager = LinearLayoutManager(this@MainActivity)
             adapter = appAdapter
+        }
+
+        emptyActionButton.setOnClickListener {
+            loadApps()
+        }
+    }
+
+    private fun setupSearch() {
+        searchBar.setOnClickListener {
+            searchBar.clearText()
+            searchBar.expand()
+        }
+
+        searchBar.addTransitionListener(object : SearchBar.TransitionListener {
+            override fun onTransitionStart(searchBar: SearchBar) {}
+            override fun onTransitionEnd(searchBar: SearchBar) {}
+        })
+
+        searchBar.addOnEditTextChangeListener { text ->
+            if (text.isNullOrBlank()) {
+                viewModel.clearSearch()
+            } else {
+                viewModel.searchApps(text.toString())
+            }
         }
     }
 

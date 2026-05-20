@@ -37,17 +37,27 @@ class MainViewModel @Inject constructor(
     val cloneProgress: StateFlow&lt;CloneProgress?&gt; = _cloneProgress.asStateFlow()
 
     /**
-     * 加载已安装的应用列表
+     * 加载已安装的应用列表 - 首先从系统加载并同步，然后显示
      */
     fun loadInstalledApps() {
         viewModelScope.launch {
             _uiState.value = UiState.Loading
             
             try {
+                // 步骤1: 从系统加载并同步应用到数据库
+                val syncResult = appRepository.loadAndSyncInstalledApps()
+                
+                if (syncResult.isSuccess) {
+                    Timber.d("Synced ${syncResult.getOrNull()} apps from system")
+                } else {
+                    Timber.w(syncResult.exceptionOrNull(), "Failed to sync installed apps")
+                }
+                
+                // 步骤2: 从数据库订阅应用列表
                 val apps = appRepository.getAllApps()
                 apps.collect { appList ->
                     _uiState.value = UiState.Success(apps = appList)
-                    Timber.d("Loaded ${appList.size} installed apps")
+                    Timber.d("Loaded ${appList.size} apps from database")
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Failed to load installed apps")
@@ -91,6 +101,9 @@ class MainViewModel @Inject constructor(
                     progress = 80,
                     stage = CloneStage.SIGNING
                 )
+
+                // 更新应用克隆计数和标记
+                appRepository.incrementCloneCount(app.packageName)
 
                 // 保存克隆历史
                 val history = CloneHistory(
