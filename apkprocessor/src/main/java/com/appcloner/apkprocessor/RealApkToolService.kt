@@ -103,11 +103,11 @@ class RealApkToolService(
             }
             
             // 从assets复制
-            val inputStream = context.assets.open(APKTOOL_JAR_NAME)
-            val outputStream = java.io.FileOutputStream(apkToolFile)
-            inputStream.copyTo(outputStream)
-            outputStream.close()
-            inputStream.close()
+            context.assets.open(APKTOOL_JAR_NAME).use { inputStream -&gt;
+                java.io.FileOutputStream(apkToolFile).use { outputStream -&gt;
+                    inputStream.copyTo(outputStream)
+                }
+            }
             
             // 设置可执行权限
             apkToolFile.setExecutable(true)
@@ -140,9 +140,10 @@ class RealApkToolService(
     }
 
     /**
-     * 执行命令
+     * 执行命令 - 修复了死锁和资源泄露问题
      */
     private fun executeCommand(command: List&lt;String&gt;): Boolean {
+        var process: Process? = null
         return try {
             Log.i(TAG, "执行命令: ${command.joinToString(" ")}")
             
@@ -150,10 +151,12 @@ class RealApkToolService(
                 .directory(context.cacheDir)
                 .redirectErrorStream(true)
             
-            val process = processBuilder.start()
+            process = processBuilder.start()
+            
+            // 先读取输出，再等待进程结束，避免死锁
+            val output = process.inputStream.bufferedReader().use { it.readText() }
             val exitCode = process.waitFor()
             
-            val output = process.inputStream.bufferedReader().use { it.readText() }
             Log.d(TAG, "命令输出:\n$output")
             
             if (exitCode != 0) {
@@ -166,6 +169,9 @@ class RealApkToolService(
         } catch (e: Exception) {
             Log.e(TAG, "命令执行异常", e)
             false
+        } finally {
+            // 确保进程资源被释放
+            process?.destroy()
         }
     }
 }

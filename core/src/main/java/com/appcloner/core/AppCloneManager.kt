@@ -1,3 +1,4 @@
+
 package com.appcloner.core
 
 import android.content.Context
@@ -48,6 +49,7 @@ class AppCloneManager(
     companion object {
         private const val TAG = "AppCloneManager"
         private const val TOTAL_PROCESSING_STEPS = 7
+        private val INVALID_FILENAME_CHARS = Regex("[\\\\/:*?\"&lt;&gt;|]")
     }
 
     /**
@@ -59,8 +61,13 @@ class AppCloneManager(
     suspend fun executeClone(
         configuration: AppCloneConfiguration,
         progressListener: AppCloneProgressListener? = null
-    ): Result<File> = withContext(Dispatchers.IO) {
+    ): Result&lt;File&gt; = withContext(Dispatchers.IO) {
         try {
+            // 预验证：检查输入参数
+            validateConfiguration(configuration).getOrElse { error -&gt;
+                return@withContext Result.failure(error)
+            }
+
             LogUtils.i("开始克隆应用: ${configuration.originalApk.name}", TAG)
 
             val workingDirectory = File(configuration.outputDirectory, "work_${System.currentTimeMillis()}")
@@ -68,6 +75,7 @@ class AppCloneManager(
             
             // Step 1: 准备工作目录
             progressListener?.onProgress(1, TOTAL_PROCESSING_STEPS, "准备工作中...")
+            prepareWorkingDirectory(workingDirectory, decompiledDirectory)
             
             // Step 2: 反编译APK
             progressListener?.onProgress(2, TOTAL_PROCESSING_STEPS, "反编译APK...")
@@ -79,6 +87,10 @@ class AppCloneManager(
             // Step 3: 修改包名
             progressListener?.onProgress(3, TOTAL_PROCESSING_STEPS, "修改包名...")
             val originalPackageName = extractPackageName(decompiledDirectory)
+            if (originalPackageName.isBlank()) {
+                return@withContext Result.failure(IllegalStateException("无法提取原始包名"))
+            }
+            
             val modifyResult = packageModifier.modifyPackageName(
                 decompiledDirectory,
                 originalPackageName,
@@ -102,7 +114,8 @@ class AppCloneManager(
 
             // Step 6: 签名
             progressListener?.onProgress(6, TOTAL_PROCESSING_STEPS, "签名APK...")
-            val signedApk = File(configuration.outputDirectory, "${configuration.newAppName.replace(" ", "_")}_cloned.apk")
+            val safeAppName = sanitizeFileName(configuration.newAppName)
+            val signedApk = File(configuration.outputDirectory, "${safeAppName}_cloned.apk")
             val signResult = apkSigner.signApk(unsignedApk, signedApk)
             if (signResult.isFailure) {
                 return@withContext Result.failure(signResult.exceptionOrNull()!!)
@@ -122,6 +135,39 @@ class AppCloneManager(
     }
 
     /**
+     * 验证克隆配置
+     */
+    private fun validateConfiguration(configuration: AppCloneConfiguration): Result&lt;Unit&gt; {
+        if (!configuration.originalApk.exists()) {
+            return Result.failure(IllegalArgumentException("原始APK文件不存在"))
+        }
+        if (configuration.originalApk.extension.lowercase() != "apk") {
+            return Result.failure(IllegalArgumentException("文件不是APK格式"))
+        }
+        if (configuration.newPackageName.isBlank()) {
+            return Result.failure(IllegalArgumentException("新包名不能为空"))
+        }
+        if (!configuration.newPackageName.matches(Regex("^[a-zA-Z][a-zA-Z0-9_]*(\\.[a-zA-Z][a-zA-Z0-9_]*)+$"))) {
+            return Result.failure(IllegalArgumentException("包名格式无效"))
+        }
+        if (configuration.newAppName.isBlank()) {
+            return Result.failure(IllegalArgumentException("新应用名称不能为空"))
+        }
+        return Result.success(Unit)
+    }
+
+    /**
+     * 准备工作目录
+     */
+    private fun prepareWorkingDirectory(workingDir: File, decompiledDir: File) {
+        if (workingDir.exists()) {
+            workingDir.deleteRecursively()
+        }
+        workingDir.mkdirs()
+        decompiledDir.mkdirs()
+    }
+
+    /**
      * 从反编译目录提取原始包名
      */
     private fun extractPackageName(decompiledDirectory: File): String {
@@ -132,11 +178,12 @@ class AppCloneManager(
         
         val content = manifestFile.readText()
         val pattern = Regex("package=\"([^\"]+)\"")
-        return pattern.find(content)?.groupValues?.get(1) ?: ""
+        val matchResult = pattern.find(content)
+        return matchResult?.groupValues?.get(1) ?: ""
     }
 
     /**
-     * 修改应用名称
+     * 修改应用名称，包含XML转义处理
      */
     private fun updateAppName(decompiledDirectory: File, newName: String) {
         val resourcesDirectory = File(decompiledDirectory, "res")
@@ -145,12 +192,29 @@ class AppCloneManager(
         
         if (stringsXmlFile.exists()) {
             var content = stringsXmlFile.readText()
+            // XML转义特殊字符
+            val escapedName = newName
+                .replace("&amp;", "&amp;amp;")
+                .replace("&lt;", "&amp;lt;")
+                .replace("&gt;", "&amp;gt;")
+                .replace("\"", "&amp;quot;")
+                .replace("'", "&amp;apos;")
+            
             content = content.replace(
-                Regex("name=\"app_name\"[^>]*>[^<]*</string>"),
-                "name=\"app_name\">$newName</string>"
+                Regex("name=\"app_name\"[^&gt;]*&gt;[^&lt;]*&lt;/string&gt;"),
+                "name=\"app_name\"&gt;$escapedName&lt;/string&gt;"
             )
             stringsXmlFile.writeText(content)
         }
+    }
+
+    /**
+     * 安全的文件名清理
+     */
+    private fun sanitizeFileName(name: String): String {
+        return name.replace(INVALID_FILENAME_CHARS, "_")
+            .take(100)  // 限制文件名长度
+            .ifBlank { "app" }
     }
 }
 

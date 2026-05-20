@@ -1,9 +1,10 @@
 
 package com.appcloner.utils
 
+import android.util.Log
+import org.apache.commons.io.FileUtils as CommonsFileUtils
 import java.io.File
 import java.io.FileInputStream
-import java.io.FileOutputStream
 import java.security.MessageDigest
 
 /**
@@ -13,7 +14,7 @@ import java.security.MessageDigest
  */
 object FileUtils {
 
-    private val logger = LoggerFactory.getLogger("FileUtils")
+    private const val TAG = "FileUtils"
 
     /**
      * 复制文件
@@ -23,11 +24,11 @@ object FileUtils {
      */
     fun copyFile(source: File, dest: File): Boolean {
         return try {
-            org.apache.commons.io.FileUtils.copyFile(source, dest)
-            logger.info("File copied: ${source.absolutePath} → ${dest.absolutePath}")
+            CommonsFileUtils.copyFile(source, dest)
+            Log.i(TAG, "File copied: ${source.absolutePath} → ${dest.absolutePath}")
             true
         } catch (e: Exception) {
-            logger.error("Failed to copy file: ${e.message}", e)
+            Log.e(TAG, "Failed to copy file: ${e.message}", e)
             false
         }
     }
@@ -37,11 +38,11 @@ object FileUtils {
      */
     fun copyDirectory(source: File, dest: File): Boolean {
         return try {
-            org.apache.commons.io.FileUtils.copyDirectory(source, dest)
-            logger.info("Directory copied: ${source.absolutePath} → ${dest.absolutePath}")
+            CommonsFileUtils.copyDirectory(source, dest)
+            Log.i(TAG, "Directory copied: ${source.absolutePath} → ${dest.absolutePath}")
             true
         } catch (e: Exception) {
-            logger.error("Failed to copy directory: ${e.message}", e)
+            Log.e(TAG, "Failed to copy directory: ${e.message}", e)
             false
         }
     }
@@ -51,11 +52,11 @@ object FileUtils {
      */
     fun deleteDirectory(directory: File): Boolean {
         return try {
-            org.apache.commons.io.FileUtils.deleteDirectory(directory)
-            logger.info("Directory deleted: ${directory.absolutePath}")
+            CommonsFileUtils.deleteDirectory(directory)
+            Log.i(TAG, "Directory deleted: ${directory.absolutePath}")
             true
         } catch (e: Exception) {
-            logger.error("Failed to delete directory: ${e.message}", e)
+            Log.e(TAG, "Failed to delete directory: ${e.message}", e)
             false
         }
     }
@@ -66,7 +67,7 @@ object FileUtils {
     fun calculateMD5(file: File): String? {
         return try {
             val md5Digest = MessageDigest.getInstance("MD5")
-            FileInputStream(file).use { fis -&gt;
+            FileInputStream(file).use { fis ->
                 val buffer = ByteArray(8192)
                 var bytesRead: Int
                 while (fis.read(buffer).also { bytesRead = it } != -1) {
@@ -76,7 +77,7 @@ object FileUtils {
             val md5Bytes = md5Digest.digest()
             md5Bytes.joinToString("") { "%02x".format(it) }
         } catch (e: Exception) {
-            logger.error("Failed to calculate MD5: ${e.message}", e)
+            Log.e(TAG, "Failed to calculate MD5: ${e.message}", e)
             null
         }
     }
@@ -89,12 +90,12 @@ object FileUtils {
             if (!directory.exists()) {
                 val created = directory.mkdirs()
                 if (created) {
-                    logger.info("Directory created: ${directory.absolutePath}")
+                    Log.i(TAG, "Directory created: ${directory.absolutePath}")
                 }
             }
             true
         } catch (e: Exception) {
-            logger.error("Failed to create directory: ${e.message}", e)
+            Log.e(TAG, "Failed to create directory: ${e.message}", e)
             false
         }
     }
@@ -105,10 +106,10 @@ object FileUtils {
     fun getFormattedFileSize(file: File): String {
         val size = file.length()
         return when {
-            size &lt; 1024 -&gt; "$size B"
-            size &lt; 1024 * 1024 -&gt; "${size / 1024} KB"
-            size &lt; 1024 * 1024 * 1024 -&gt; "${size / (1024 * 1024)} MB"
-            else -&gt; "${size / (1024 * 1024 * 1024)} GB"
+            size < 1024 -> "$size B"
+            size < 1024 * 1024 -> "${size / 1024} KB"
+            size < 1024 * 1024 * 1024 -> "${size / (1024 * 1024)} MB"
+            else -> "${size / (1024 * 1024 * 1024)} GB"
         }
     }
 }

@@ -1,107 +1,66 @@
-
 package com.appcloner
 
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.appcloner.core.model.AppInfo
+import com.google.android.material.button.MaterialButton
 
 class AppAdapter(
-    private val appList: List&lt;AppInfo&gt;,
-    private val onSaveClick: (AppInfo) -&gt; Unit,
-    private val onShareClick: (AppInfo) -&gt; Unit,
-    private val onInstallClick: (AppInfo) -&gt; Unit,
-    private val onDeleteClick: (AppInfo) -&gt; Unit,
-    private val onLaunchClick: (AppInfo) -&gt; Unit,
-    private val onDetailClick: (AppInfo) -&gt; Unit,
-    private val onFavoriteClick: (AppInfo) -&gt; Unit = {}
-) : RecyclerView.Adapter&lt;AppAdapter.AppViewHolder&gt;() {
-
-    inner class AppViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val appIcon: ImageView = itemView.findViewById(R.id.appIcon)
-        val appName: TextView = itemView.findViewById(R.id.appName)
-        val packageName: TextView = itemView.findViewById(R.id.packageName)
-        val actionButton1: Button = itemView.findViewById(R.id.actionButton1)
-        val actionButton2: Button? = itemView.findViewById(R.id.actionButton2)
-        val actionButton3: Button? = itemView.findViewById(R.id.actionButton3)
-        val favoriteButton: Button? = itemView.findViewById(R.id.favoriteButton)
-    }
-
+    private val onAppClick: (AppInfo) -> Unit,
+    private val onCloneClick: (AppInfo) -> Unit = {}
+) : ListAdapter<AppInfo, AppAdapter.AppViewHolder>(AppDiffCallback()) {
+    
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AppViewHolder {
         val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_app, parent, false)
+            .inflate(R.layout.item_app_md3, parent, false)
         return AppViewHolder(view)
     }
-
+    
     override fun onBindViewHolder(holder: AppViewHolder, position: Int) {
-        val app = appList[position]
-        holder.appIcon.setImageDrawable(app.icon)
+        holder.bind(getItem(position))
+    }
+    
+    inner class AppViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val appName: TextView? = itemView.findViewById(R.id.appName)
+        private val packageName: TextView? = itemView.findViewById(R.id.packageName)
+        private val appIcon: ImageView? = itemView.findViewById(R.id.appIcon)
+        private val versionInfo: TextView? = itemView.findViewById(R.id.version)
+        private val cloneButton: MaterialButton? = itemView.findViewById(R.id.cloneButton)
         
-        if (app.isCloned) {
-            holder.appName.text = app.appName
-            holder.packageName.text = app.packageName
+        fun bind(app: AppInfo) {
+            appName?.text = app.appName.ifEmpty { "Unknown App" }
+            packageName?.text = app.packageName.ifEmpty { "Unknown Package" }
             
-            holder.actionButton1.text = "安装"
-            holder.actionButton2?.text = "分享"
-            holder.actionButton3?.text = "详情"
+            appIcon?.setImageResource(android.R.drawable.ic_menu_gallery)
             
-            holder.actionButton2?.visibility = View.VISIBLE
-            holder.actionButton3?.visibility = View.VISIBLE
-            holder.favoriteButton?.visibility = View.GONE
+            versionInfo?.text = app.versionName
             
-            holder.actionButton1.setOnClickListener {
-                onInstallClick(app)
+            cloneButton?.setOnClickListener {
+                onCloneClick(app)
             }
             
-            holder.actionButton2?.setOnClickListener {
-                onShareClick(app)
+            itemView.setOnClickListener {
+                onAppClick(app)
             }
-            
-            holder.actionButton3?.setOnClickListener {
-                onDetailClick(app)
-            }
-            
-            holder.itemView.setOnLongClickListener {
-                onDeleteClick(app)
-                true
-            }
-        } else {
-            holder.appName.text = app.appName
-            val versionInfo = if (app.versionName.isNotEmpty()) "v${app.versionName}" else ""
-            val sizeInfo = app.getFormattedSize()
-            holder.packageName.text = "${app.packageName}\n$versionInfo • $sizeInfo"
-            
-            holder.actionButton1.text = "克隆"
-            holder.actionButton2?.text = "启动"
-            holder.actionButton3?.text = "详情"
-            holder.favoriteButton?.text = if (app.isFavorite) "★" else "☆"
-            
-            holder.actionButton2?.visibility = View.VISIBLE
-            holder.actionButton3?.visibility = View.VISIBLE
-            holder.favoriteButton?.visibility = View.VISIBLE
-            
-            holder.actionButton1.setOnClickListener {
-                onSaveClick(app)
-            }
-            
-            holder.actionButton2?.setOnClickListener {
-                onLaunchClick(app)
-            }
-            
-            holder.actionButton3?.setOnClickListener {
-                onDetailClick(app)
-            }
-            
-            holder.favoriteButton?.setOnClickListener {
-                onFavoriteClick(app)
-            }
-            
-            holder.itemView.setOnLongClickListener(null)
         }
     }
-
-    override fun getItemCount(): Int = appList.size
+    
+    private class AppDiffCallback : DiffUtil.ItemCallback<AppInfo>() {
+        override fun areItemsTheSame(oldItem: AppInfo, newItem: AppInfo): Boolean {
+            return oldItem.packageName == newItem.packageName
+        }
+        
+        override fun areContentsTheSame(oldItem: AppInfo, newItem: AppInfo): Boolean {
+            return oldItem.packageName == newItem.packageName &&
+                   oldItem.appName == newItem.appName &&
+                   oldItem.versionName == newItem.versionName &&
+                   oldItem.isFavorite == newItem.isFavorite
+        }
+    }
 }

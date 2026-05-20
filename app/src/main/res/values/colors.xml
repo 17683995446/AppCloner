@@ -1,62 +1,49 @@
 
 &lt;?xml version="1.0" encoding="utf-8"?&gt;
 &lt;resources&gt;
-    &lt;color name="primary"&gt;#6200EE&lt;/color&gt;
-    &lt;color name="primary_variant"&gt;#3700B3&lt;/color&gt;
-    &lt;color name="secondary"&gt;#03DAC6&lt;/color&gt;
-    &lt;color name="secondary_variant"&gt;#018786&lt;/color&gt;
-    &lt;color name="background"&gt;#FFFFFF&lt;/color&gt;
-    &lt;color name="surface"&gt;#FFFFFF&lt;/color&gt;
-    &lt;color name="text_primary"&gt;#1A1A1A&lt;/color&gt;
-    &lt;color name="text_secondary"&gt;#757575&lt;/color&gt;
-    &lt;color name="card_background"&gt;#FAFAFA&lt;/color&gt;
-    &lt;color name="divider"&gt;#E0E0E0&lt;/color&gt;
-
-    &lt;color name="md_theme_light_primary"&gt;#6750A4&lt;/color&gt;
-    &lt;color name="md_theme_light_onPrimary"&gt;#FFFFFF&lt;/color&gt;
-    &lt;color name="md_theme_light_primaryContainer"&gt;#EADDFF&lt;/color&gt;
-    &lt;color name="md_theme_light_onPrimaryContainer"&gt;#21005D&lt;/color&gt;
-    &lt;color name="md_theme_light_secondary"&gt;#625B71&lt;/color&gt;
-    &lt;color name="md_theme_light_onSecondary"&gt;#FFFFFF&lt;/color&gt;
-    &lt;color name="md_theme_light_secondaryContainer"&gt;#E8DEF8&lt;/color&gt;
-    &lt;color name="md_theme_light_onSecondaryContainer"&gt;#1D192B&lt;/color&gt;
-    &lt;color name="md_theme_light_tertiary"&gt;#7D5260&lt;/color&gt;
-    &lt;color name="md_theme_light_onTertiary"&gt;#FFFFFF&lt;/color&gt;
-    &lt;color name="md_theme_light_tertiaryContainer"&gt;#FFD8E4&lt;/color&gt;
-    &lt;color name="md_theme_light_onTertiaryContainer"&gt;#31111D&lt;/color&gt;
-    &lt;color name="md_theme_light_error"&gt;#B3261E&lt;/color&gt;
-    &lt;color name="md_theme_light_onError"&gt;#FFFFFF&lt;/color&gt;
-    &lt;color name="md_theme_light_errorContainer"&gt;#F9DEDC&lt;/color&gt;
-    &lt;color name="md_theme_light_onErrorContainer"&gt;#410E0B&lt;/color&gt;
-    &lt;color name="md_theme_light_outline"&gt;#79747E&lt;/color&gt;
-    &lt;color name="md_theme_light_background"&gt;#FFFBFE&lt;/color&gt;
-    &lt;color name="md_theme_light_onBackground"&gt;#1C1B1F&lt;/color&gt;
-    &lt;color name="md_theme_light_surface"&gt;#FFFBFE&lt;/color&gt;
-    &lt;color name="md_theme_light_onSurface"&gt;#1C1B1F&lt;/color&gt;
-    &lt;color name="md_theme_light_surfaceVariant"&gt;#E7E0EC&lt;/color&gt;
-    &lt;color name="md_theme_light_onSurfaceVariant"&gt;#49454F&lt;/color&gt;
-
-    &lt;color name="md_theme_dark_primary"&gt;#D0BCFF&lt;/color&gt;
-    &lt;color name="md_theme_dark_onPrimary"&gt;#381E72&lt;/color&gt;
-    &lt;color name="md_theme_dark_primaryContainer"&gt;#4F378B&lt;/color&gt;
-    &lt;color name="md_theme_dark_onPrimaryContainer"&gt;#EADDFF&lt;/color&gt;
-    &lt;color name="md_theme_dark_secondary"&gt;#CCC2DC&lt;/color&gt;
-    &lt;color name="md_theme_dark_onSecondary"&gt;#332D41&lt;/color&gt;
-    &lt;color name="md_theme_dark_secondaryContainer"&gt;#4A4458&lt;/color&gt;
-    &lt;color name="md_theme_dark_onSecondaryContainer"&gt;#E8DEF8&lt;/color&gt;
-    &lt;color name="md_theme_dark_tertiary"&gt;#EFB8C8&lt;/color&gt;
-    &lt;color name="md_theme_dark_onTertiary"&gt;#492532&lt;/color&gt;
-    &lt;color name="md_theme_dark_tertiaryContainer"&gt;#633B48&lt;/color&gt;
-    &lt;color name="md_theme_dark_onTertiaryContainer"&gt;#FFD8E4&lt;/color&gt;
-    &lt;color name="md_theme_dark_error"&gt;#F2B8B5&lt;/color&gt;
-    &lt;color name="md_theme_dark_onError"&gt;#601410&lt;/color&gt;
-    &lt;color name="md_theme_dark_errorContainer"&gt;#8C1D18&lt;/color&gt;
-    &lt;color name="md_theme_dark_onErrorContainer"&gt;#F9DEDC&lt;/color&gt;
-    &lt;color name="md_theme_dark_outline"&gt;#938F99&lt;/color&gt;
-    &lt;color name="md_theme_dark_background"&gt;#1C1B1F&lt;/color&gt;
-    &lt;color name="md_theme_dark_onBackground"&gt;#E6E1E5&lt;/color&gt;
-    &lt;color name="md_theme_dark_surface"&gt;#1C1B1F&lt;/color&gt;
-    &lt;color name="md_theme_dark_onSurface"&gt;#E6E1E5&lt;/color&gt;
-    &lt;color name="md_theme_dark_surfaceVariant"&gt;#49454F&lt;/color&gt;
-    &lt;color name="md_theme_dark_onSurfaceVariant"&gt;#CAC4D0&lt;/color&gt;
+    &lt;!-- Material Design 3 Colors - Custom Purple/Teal theme --&gt;
+    
+    &lt;!-- Primary Colors --&gt;
+    &lt;color name="md_theme_primary"&gt;#6750A4&lt;/color&gt;
+    &lt;color name="md_theme_onPrimary"&gt;#FFFFFF&lt;/color&gt;
+    &lt;color name="md_theme_primaryContainer"&gt;#EADDFF&lt;/color&gt;
+    &lt;color name="md_theme_onPrimaryContainer"&gt;#21005D&lt;/color&gt;
+    
+    &lt;!-- Secondary Colors --&gt;
+    &lt;color name="md_theme_secondary"&gt;#625B71&lt;/color&gt;
+    &lt;color name="md_theme_onSecondary"&gt;#FFFFFF&lt;/color&gt;
+    &lt;color name="md_theme_secondaryContainer"&gt;#E8DEF8&lt;/color&gt;
+    &lt;color name="md_theme_onSecondaryContainer"&gt;#1D192B&lt;/color&gt;
+    
+    &lt;!-- Tertiary Colors --&gt;
+    &lt;color name="md_theme_tertiary"&gt;#7D5260&lt;/color&gt;
+    &lt;color name="md_theme_onTertiary"&gt;#FFFFFF&lt;/color&gt;
+    &lt;color name="md_theme_tertiaryContainer"&gt;#FFD8E4&lt;/color&gt;
+    &lt;color name="md_theme_onTertiaryContainer"&gt;#31111D&lt;/color&gt;
+    
+    &lt;!-- Error Colors --&gt;
+    &lt;color name="md_theme_error"&gt;#B3261E&lt;/color&gt;
+    &lt;color name="md_theme_onError"&gt;#FFFFFF&lt;/color&gt;
+    &lt;color name="md_theme_errorContainer"&gt;#F9DEDC&lt;/color&gt;
+    &lt;color name="md_theme_onErrorContainer"&gt;#410E0B&lt;/color&gt;
+    
+    &lt;!-- Surface Colors --&gt;
+    &lt;color name="md_theme_surface"&gt;#FFFBFE&lt;/color&gt;
+    &lt;color name="md_theme_onSurface"&gt;#1C1B1F&lt;/color&gt;
+    &lt;color name="md_theme_surfaceVariant"&gt;#E7E0EC&lt;/color&gt;
+    &lt;color name="md_theme_onSurfaceVariant"&gt;#49454F&lt;/color&gt;
+    
+    &lt;color name="md_theme_surfaceContainerLow"&gt;#F7F2F9&lt;/color&gt;
+    &lt;color name="md_theme_surfaceContainer"&gt;#F3EDF7&lt;/color&gt;
+    &lt;color name="md_theme_surfaceContainerHigh"&gt;#ECE6F0&lt;/color&gt;
+    &lt;color name="md_theme_surfaceContainerHighest"&gt;#E6E1E9&lt;/color&gt;
+    
+    &lt;color name="md_theme_outline"&gt;#79747E&lt;/color&gt;
+    &lt;color name="md_theme_outlineVariant"&gt;#CAC4D0&lt;/color&gt;
+    
+    &lt;color name="md_theme_inverseOnSurface"&gt;#F5EFF7&lt;/color&gt;
+    &lt;color name="md_theme_inverseSurface"&gt;#313033&lt;/color&gt;
+    &lt;color name="md_theme_inversePrimary"&gt;#D0BCFF&lt;/color&gt;
+    
+    &lt;color name="md_theme_surfaceTint"&gt;#6750A4&lt;/color&gt;
 &lt;/resources&gt;

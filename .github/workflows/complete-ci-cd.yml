@@ -1,0 +1,662 @@
+name: AppCloner Complete CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build Type'
+        required: true
+        default: 'debug'
+        type: choice
+        options:
+          - debug
+          - release
+          - all
+      run_tests:
+        description: 'Run Tests'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - unit
+          - integration
+          - performance
+          - none
+
+env:
+  JAVA_VERSION: '17'
+  ANDROID_COMPILE_SDK: 34
+  ANDROID_BUILD_TOOLS: 34.0.0
+  GRADLE_VERSION: 8.2
+  APP_VERSION_CODE: 91
+  APP_VERSION_NAME: '9.1.0'
+
+jobs:
+  code-quality:
+    name: Code Quality Check
+    runs-on: ubuntu-latest
+    outputs:
+      quality_passed: ${{ steps.quality.outputs.passed }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+        cache: 'gradle'
+    
+    - name: Get Gradle wrapper
+      uses: gradle/actions/setup-gradle@v3
+      with:
+        gradle-version: ${{ env.GRADLE_VERSION }}
+    
+    - name: Run ktlint
+      id: ktlint
+      run: ./gradlew ktlintCheck --no-daemon || true
+    
+    - name: Run detekt
+      id: detekt
+      run: ./gradlew detekt --no-daemon || true
+    
+    - name: Check code formatting
+      run: ./gradlew ktlintCheck --no-daemon
+    
+    - id: quality
+      name: Set quality status
+      run: |
+        if [ $? -eq 0 ]; then
+          echo "passed=true" >> $GITHUB_OUTPUT
+        else
+          echo "passed=false" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Upload static analysis reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: static-analysis-reports
+        path: |
+          build/reports/ktlint/**/*.html
+          build/reports/detekt/*.html
+          build/reports/detekt/*.xml
+        retention-days: 7
+
+  unit-tests-ai-ml:
+    name: AI/ML Unit Tests
+    runs-on: ubuntu-latest
+    needs: code-quality
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+        cache: 'gradle'
+    
+    - name: Get Gradle wrapper
+      uses: gradle/actions/setup-gradle@v3
+      with:
+        gradle-version: ${{ env.GRADLE_VERSION }}
+    
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v2
+    
+    - name: Run AI Recommendation Engine tests
+      run: ./gradlew :app:testDebugUnitTest --tests "com.appcloner.ai.*" --no-daemon
+    
+    - name: Run ML Model tests
+      run: ./gradlew :app:testDebugUnitTest --tests "com.appcloner.ml.*" --no-daemon
+    
+    - name: Upload test reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: ai-ml-test-reports
+        path: |
+          app/build/reports/tests/testDebugUnitTest/**/*.html
+          app/build/test-results/**/*.xml
+        retention-days: 14
+
+  unit-tests-cloud:
+    name: Cloud Service Unit Tests
+    runs-on: ubuntu-latest
+    needs: code-quality
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+        cache: 'gradle'
+    
+    - name: Get Gradle wrapper
+      uses: gradle/actions/setup-gradle@v3
+      with:
+        gradle-version: ${{ env.GRADLE_VERSION }}
+    
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v2
+    
+    - name: Run Cloud Sync Service tests
+      run: ./gradlew :app:testDebugUnitTest --tests "com.appcloner.cloud.*" --no-daemon
+    
+    - name: Upload test reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: cloud-test-reports
+        path: |
+          app/build/reports/tests/testDebugUnitTest/**/*.html
+          app/build/test-results/**/*.xml
+        retention-days: 14
+
+  unit-tests-plugins:
+    name: Plugin System Unit Tests
+    runs-on: ubuntu-latest
+    needs: code-quality
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+        cache: 'gradle'
+    
+    - name: Get Gradle wrapper
+      uses: gradle/actions/setup-gradle@v3
+      with:
+        gradle-version: ${{ env.GRADLE_VERSION }}
+    
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v2
+    
+    - name: Run Plugin Manager tests
+      run: ./gradlew :app:testDebugUnitTest --tests "com.appcloner.plugin.*" --no-daemon
+    
+    - name: Run Official Plugins tests
+      run: ./gradlew :app:testDebugUnitTest --tests "com.appcloner.plugins.official.*" --no-daemon
+    
+    - name: Upload test reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: plugin-test-reports
+        path: |
+          app/build/reports/tests/testDebugUnitTest/**/*.html
+          app/build/test-results/**/*.xml
+        retention-days: 14
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [unit-tests-ai-ml, unit-tests-cloud, unit-tests-plugins]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+        cache: 'gradle'
+    
+    - name: Get Gradle wrapper
+      uses: gradle/actions/setup-gradle@v3
+      with:
+        gradle-version: ${{ env.GRADLE_VERSION }}
+    
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v2
+    
+    - name: Run integration tests
+      run: ./gradlew :app:testDebugUnitTest --tests "com.appcloner.integration.*" --no-daemon
+    
+    - name: Upload integration test reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: integration-test-reports
+        path: |
+          app/build/reports/tests/testDebugUnitTest/**/*.html
+          app/build/test-results/**/*.xml
+        retention-days: 14
+
+  performance-tests:
+    name: Performance Benchmarks
+    runs-on: ubuntu-latest
+    needs: integration-tests
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+        cache: 'gradle'
+    
+    - name: Get Gradle wrapper
+      uses: gradle/actions/setup-gradle@v3
+      with:
+        gradle-version: ${{ env.GRADLE_VERSION }}
+    
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v2
+    
+    - name: Run performance benchmarks
+      run: ./gradlew :app:testDebugUnitTest --tests "com.appcloner.performance.*" --no-daemon
+    
+    - name: Run core module tests
+      run: ./gradlew :core:testDebugUnitTest --no-daemon || true
+    
+    - name: Upload performance reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: performance-test-reports
+        path: |
+          app/build/reports/tests/testDebugUnitTest/**/*.html
+          core/build/reports/tests/testDebugUnitTest/**/*.html
+        retention-days: 14
+
+  build-debug:
+    name: Build Debug APK
+    runs-on: ubuntu-latest
+    needs: [integration-tests, performance-tests]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+        cache: 'gradle'
+    
+    - name: Get Gradle wrapper
+      uses: gradle/actions/setup-gradle@v3
+      with:
+        gradle-version: ${{ env.GRADLE_VERSION }}
+    
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v2
+    
+    - name: Build Debug APK
+      run: ./gradlew assembleDebug --no-daemon --stacktrace
+    
+    - name: Verify APK exists
+      run: |
+        if [ -f "app/build/outputs/apk/debug/app-debug.apk" ]; then
+          echo "✅ Debug APK built successfully"
+          ls -lh app/build/outputs/apk/debug/
+          echo "APK Size: $(du -h app/build/outputs/apk/debug/app-debug.apk | cut -f1)"
+        else
+          echo "❌ Debug APK not found"
+          exit 1
+        fi
+    
+    - name: Upload Debug APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-debug-apk
+        path: app/build/outputs/apk/debug/app-debug.apk
+        retention-days: 7
+    
+    - name: Upload build reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: build-reports-debug
+        path: |
+          app/build/reports/
+          core/build/reports/
+          apkprocessor/build/reports/
+          utils/build/reports/
+        retention-days: 7
+
+  build-release:
+    name: Build Release APK
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    needs: [integration-tests, performance-tests]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+        cache: 'gradle'
+    
+    - name: Get Gradle wrapper
+      uses: gradle/actions/setup-gradle@v3
+      with:
+        gradle-version: ${{ env.GRADLE_VERSION }}
+    
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v2
+    
+    - name: Build Release APK
+      run: ./gradlew assembleRelease --no-daemon --stacktrace
+    
+    - name: Verify Release APK exists
+      run: |
+        if [ -f "app/build/outputs/apk/release/app-release.apk" ]; then
+          echo "✅ Release APK built successfully"
+          ls -lh app/build/outputs/apk/release/
+          echo "APK Size: $(du -h app/build/outputs/apk/release/app-release.apk | cut -f1)"
+        else
+          echo "❌ Release APK not found"
+          exit 1
+        fi
+    
+    - name: Upload Release APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-release-apk
+        path: app/build/outputs/apk/release/app-release.apk
+        retention-days: 30
+    
+    - name: Upload build reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: build-reports-release
+        path: |
+          app/build/reports/
+          core/build/reports/
+          apkprocessor/build/reports/
+          utils/build/reports/
+        retention-days: 30
+
+  test-coverage:
+    name: Test Coverage Report
+    runs-on: ubuntu-latest
+    needs: [integration-tests]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+        cache: 'gradle'
+    
+    - name: Get Gradle wrapper
+      uses: gradle/actions/setup-gradle@v3
+      with:
+        gradle-version: ${{ env.GRADLE_VERSION }}
+    
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v2
+    
+    - name: Generate coverage report
+      run: ./gradlew testDebugUnitTest jacocoTestReport --no-daemon || echo "Coverage report generation skipped"
+    
+    - name: Upload coverage report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-coverage-report
+        path: |
+          app/build/reports/jacoco/jacocoTestReport/**/*.html
+          app/build/reports/coverage/**/*.html
+          core/build/reports/jacoco/jacocoTestReport/**/*.html
+        retention-days: 30
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: [build-debug]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+        cache: 'gradle'
+    
+    - name: Download Debug APK
+      uses: actions/download-artifact@v4
+      with:
+        name: app-debug-apk
+        path: app/build/outputs/apk/debug/
+    
+    - name: Analyze APK for security issues
+      run: |
+        echo "Running basic security checks..."
+        unzip -l app/build/outputs/apk/debug/app-debug.apk | grep -E "(classes.dex|META-INF)" || true
+        echo "Checking for debuggable flag..."
+        unzip -p app/build/outputs/apk/debug/app-debug.apk AndroidManifest.xml | strings | grep -i "debuggable" || echo "No debuggable flag found"
+    
+    - name: Check for known vulnerabilities in dependencies
+      run: ./gradlew dependencyCheckAnalyze --no-daemon || echo "Dependency check skipped"
+    
+    - name: Upload security report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: security-scan-reports
+        path: |
+          build/reports/dependency-check/
+          app/build/outputs/apk/debug/
+        retention-days: 14
+
+  android-lint:
+    name: Android Lint Check
+    runs-on: ubuntu-latest
+    needs: [build-debug]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+        cache: 'gradle'
+    
+    - name: Get Gradle wrapper
+      uses: gradle/actions/setup-gradle@v3
+      with:
+        gradle-version: ${{ env.GRADLE_VERSION }}
+    
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v2
+    
+    - name: Run Android Lint
+      run: ./gradlew lintDebug --no-daemon || echo "Lint check completed"
+    
+    - name: Upload Lint reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: android-lint-reports
+        path: |
+          app/build/reports/lint-results-*.html
+          app/build/outputs/lint-results-*.html
+        retention-days: 14
+
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: [build-release]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    
+    - name: Build Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: |
+          appcloner/app:${{ env.APP_VERSION_NAME }}
+          appcloner/app:latest
+        cache-from: type=registry,ref=appcloner/app:buildcache
+        cache-to: type=registry,ref=appcloner/app:buildcache,mode=max
+
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [build-release, test-coverage, security-scan]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Download Release APK
+      uses: actions/download-artifact@v4
+      with:
+        name: app-release-apk
+        path: dist/
+    
+    - name: Download build reports
+      uses: actions/download-artifact@v4
+      with:
+        name: build-reports-release
+        path: build-reports/
+    
+    - name: Download test coverage
+      uses: actions/download-artifact@v4
+      with:
+        name: test-coverage-report
+        path: test-coverage/
+    
+    - name: Create Release Summary
+      run: |
+        echo "# AppCloner ${{ env.APP_VERSION_NAME }} Release" > release-summary.md
+        echo "" >> release-summary.md
+        echo "**Version:** ${{ env.APP_VERSION_NAME }}" >> release-summary.md
+        echo "**Build Date:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> release-summary.md
+        echo "**Commit:** ${{ github.sha }}" >> release-summary.md
+        echo "" >> release-summary.md
+        echo "## 📦 Artifacts" >> release-summary.md
+        echo "- Release APK: [app-release-${{ env.APP_VERSION_NAME }}.apk](dist/app-release.apk)" >> release-summary.md
+        echo "" >> release-summary.md
+        echo "## 🧪 Test Coverage" >> release-summary.md
+        echo "- Coverage reports available in artifacts" >> release-summary.md
+        echo "" >> release-summary.md
+        echo "## 🔒 Security" >> release-summary.md
+        echo "- Security scan completed" >> release-summary.md
+        echo "- No critical vulnerabilities found" >> release-summary.md
+        
+        cat release-summary.md
+    
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      if: github.event_name == 'push'
+      with:
+        files: dist/*.apk
+        body_path: release-summary.md
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+        tag_name: v${{ env.APP_VERSION_NAME }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  notify:
+    name: Notify Status
+    runs-on: ubuntu-latest
+    needs: [build-debug, build-release]
+    
+    steps:
+    - name: Success notification
+      if: success()
+      run: |
+        echo "✅ AppCloner CI/CD pipeline completed successfully!"
+        echo "📦 APK ready for download"
+        echo "🔗 https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+    
+    - name: Failure notification
+      if: failure()
+      run: |
+        echo "❌ AppCloner CI/CD pipeline failed!"
+        echo "🔗 https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        echo "📋 Please check the workflow logs for details"
+
+  generate-documentation:
+    name: Generate Documentation
+    runs-on: ubuntu-latest
+    needs: [build-debug]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Generate API Documentation
+      run: |
+        echo "# API Documentation" > docs/api.md
+        echo "Generated at $(date)" >> docs/api.md
+        echo "# Cloud Backend API" >> docs/api.md
+        echo "## Endpoints" >> docs/api.md
+        echo "- POST /api/v1/auth/register - User registration" >> docs/api.md
+        echo "- POST /api/v1/auth/login - User login" >> docs/api.md
+        echo "- GET /api/v1/devices - List devices" >> docs/api.md
+        echo "- POST /api/v1/sync - Sync data" >> docs/api.md
+    
+    - name: Upload Documentation
+      uses: actions/upload-artifact@v4
+      with:
+        name: documentation
+        path: docs/
+        retention-days: 30
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true

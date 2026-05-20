@@ -1,42 +1,37 @@
-
 &lt;?xml version="1.0" encoding="utf-8"?&gt;
-&lt;manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.appcloner"
-    android:installLocation="auto"&gt;
+&lt;manifest xmlns:android="http://schemas.android.com/apk/res/android"&gt;
 
     &lt;uses-permission android:name="android.permission.INTERNET" /&gt;
-    &lt;uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" /&gt;
-    &lt;uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /&gt;
-    &lt;uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" /&gt;
-    &lt;uses-permission android:name="android.permission.DELETE_PACKAGES" /&gt;
+    &lt;uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /&gt;
+    &lt;uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" /&gt;
+    &lt;uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" /&gt;
+    &lt;uses-permission android:name="android.permission.GET_PACKAGE_SIZE" /&gt;
+    &lt;uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" /&gt;
+    &lt;uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" /&gt;
+    &lt;uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" /&gt;
 
     &lt;application
+        android:name=".AppClonerApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.AppCloner"&gt;
-        
+        android:theme="@style/Theme.AppCloner"
+        android:requestLegacyExternalStorage="true"&gt;
+
         &lt;activity
             android:name=".MainActivity"
-            android:exported="true"&gt;
+            android:exported="true"
+            android:launchMode="singleTask"&gt;
             &lt;intent-filter&gt;
                 &lt;action android:name="android.intent.action.MAIN" /&gt;
                 &lt;category android:name="android.intent.category.LAUNCHER" /&gt;
             &lt;/intent-filter&gt;
         &lt;/activity&gt;
 
-        &lt;receiver
-            android:name=".widget.AppClonerWidget"
-            android:exported="true"&gt;
-            &lt;intent-filter&gt;
-                &lt;action android:name="android.appwidget.action.APPWIDGET_UPDATE" /&gt;
-            &lt;/intent-filter&gt;
-            &lt;meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/app_widget_provider" /&gt;
-        &lt;/receiver&gt;
+        &lt;receiver android:name=".plugin.AdvancedPluginManager$PluginBroadcastReceiver"
+            android:exported="false" /&gt;
 
         &lt;provider
             android:name="androidx.core.content.FileProvider"

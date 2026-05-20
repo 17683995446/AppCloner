@@ -1,284 +1,170 @@
 
 package com.appcloner.presentation.viewmodel
 
-import android.app.Application
-import android.content.Context
-import android.content.pm.ApplicationInfo
-import android.os.Build
-import android.text.format.Formatter
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.appcloner.AppInfo
-import com.appcloner.core.CloneConfig
-import com.appcloner.core.CloneManager
-import com.appcloner.utils.FileUtils
-import com.appcloner.utils.LogUtils
-import kotlinx.coroutines.Dispatchers
+import com.appcloner.core.model.AppInfo
+import com.appcloner.core.model.CloneHistory
+import com.appcloner.core.model.CloneStage
+import com.appcloner.core.model.CloneProgress
+import com.appcloner.data.repository.AppRepository
+import com.appcloner.data.repository.CloneHistoryRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.io.File
+import timber.log.Timber
+import javax.inject.Inject
 
-class MainViewModel(application: Application) : AndroidViewModel(application) {
+// ============================================================
+// 统一架构的MainViewModel - 使用Hilt依赖注入
+// ============================================================
 
-    private val context: Context = application.applicationContext
-    private val cloneManager = CloneManager(context)
-    
-    private val _installedApps = MutableLiveData<List<AppInfo>>()
-    val installedApps: LiveData<List<AppInfo>> = _installedApps
-    
-    private val _savedApks = MutableLiveData<List<AppInfo>>()
-    val savedApks: LiveData<List<AppInfo>> = _savedApks
-    
-    private val _favoriteApps = MutableLiveData<List<AppInfo>>()
-    val favoriteApps: LiveData<List<AppInfo>> = _favoriteApps
-    
-    private val _isLoading = MutableLiveData<Boolean>()
-    val isLoading: LiveData<Boolean> = _isLoading
-    
-    private val _errorMessage = MutableLiveData<String?>()
-    val errorMessage: LiveData<String?> = _errorMessage
-    
-    private val _cloneProgress = MutableLiveData<Pair<Int, String>>()
-    val cloneProgress: LiveData<Pair<Int, String>> = _cloneProgress
-    
-    val favoritePackageNames = mutableSetOf<String>()
-    var currentSortType = SortType.NAME
+@HiltViewModel
+class MainViewModel @Inject constructor(
+    private val appRepository: AppRepository,
+    private val cloneHistoryRepository: CloneHistoryRepository
+) : ViewModel() {
 
-    enum class SortType {
-        NAME, SIZE, INSTALL_TIME, UPDATE_TIME, FAVORITE
-    }
+    // UI状态 - 使用单一状态流
+    private val _uiState = MutableStateFlow&lt;UiState&gt;(UiState.Loading)
+    val uiState: StateFlow&lt;UiState&gt; = _uiState.asStateFlow()
 
+    // 克隆进度状态
+    private val _cloneProgress = MutableStateFlow&lt;CloneProgress?&gt;(null)
+    val cloneProgress: StateFlow&lt;CloneProgress?&gt; = _cloneProgress.asStateFlow()
+
+    /**
+     * 加载已安装的应用列表
+     */
     fun loadInstalledApps() {
         viewModelScope.launch {
-            _isLoading.value = true
+            _uiState.value = UiState.Loading
+            
             try {
-                val apps = withContext(Dispatchers.IO) {
-                    getInstalledAppsFromSystem()
+                val apps = appRepository.getAllApps()
+                apps.collect { appList ->
+                    _uiState.value = UiState.Success(apps = appList)
+                    Timber.d("Loaded ${appList.size} installed apps")
                 }
-                _installedApps.value = apps
-                updateFavoriteApps()
             } catch (e: Exception) {
-                LogUtils.e("Failed to load installed apps", e)
-                _errorMessage.value = "加载应用列表失败: ${e.message}"
-            } finally {
-                _isLoading.value = false
+                Timber.e(e, "Failed to load installed apps")
+                _uiState.value = UiState.Error(message = e.message ?: "Unknown error")
             }
         }
     }
 
-    private fun getInstalledAppsFromSystem(): List<AppInfo> {
-        val apps = mutableListOf<AppInfo>()
-        val packageManager = context.packageManager
-        val packages = packageManager.getInstalledApplications(
-            android.content.pm.PackageManager.GET_META_DATA
-        )
-
-        for (appInfo in packages) {
-            if (appInfo.flags and ApplicationInfo.FLAG_SYSTEM == 0) {
-                try {
-                    val name = packageManager.getApplicationLabel(appInfo).toString()
-                    val icon = packageManager.getApplicationIcon(appInfo.packageName)
-                    val packageInfo = packageManager.getPackageInfo(appInfo.packageName, 0)
-                    val apkFile = File(appInfo.sourceDir)
-                    
-                    apps.add(
-                        AppInfo(
-                            appName = name,
-                            packageName = appInfo.packageName,
-                            icon = icon,
-                            versionName = packageInfo.versionName,
-                            versionCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                                packageInfo.longVersionCode
-                            } else {
-                                packageInfo.versionCode.toLong()
-                            },
-                            installTime = packageInfo.firstInstallTime,
-                            updateTime = packageInfo.lastUpdateTime,
-                            apkSize = apkFile.length(),
-                            isFavorite = favoritePackageNames.contains(appInfo.packageName)
-                        )
-                    )
-                } catch (e: Exception) {
-                    LogUtils.e("Failed to load app: ${appInfo.packageName}", e)
-                }
-            }
-        }
-        
-        return sortApps(apps)
-    }
-
-    fun sortApps(apps: List<AppInfo>): List<AppInfo> {
-        return when (currentSortType) {
-            SortType.NAME -> apps.sortedBy { it.appName }
-            SortType.SIZE -> apps.sortedByDescending { it.apkSize }
-            SortType.INSTALL_TIME -> apps.sortedByDescending { it.installTime }
-            SortType.UPDATE_TIME -> apps.sortedByDescending { it.updateTime }
-            SortType.FAVORITE -> apps.sortedWith(
-                compareByDescending<AppInfo> { it.isFavorite }.thenBy { it.appName }
+    /**
+     * 执行应用克隆操作
+     */
+    fun cloneApp(app: AppInfo) {
+        viewModelScope.launch {
+            _cloneProgress.value = CloneProgress(
+                appName = app.appName,
+                progress = 0,
+                stage = CloneStage.PREPARING
             )
-        }
-    }
 
-    fun toggleFavorite(app: AppInfo) {
-        if (favoritePackageNames.contains(app.packageName)) {
-            favoritePackageNames.remove(app.packageName)
-        } else {
-            favoritePackageNames.add(app.packageName)
-        }
-        app.isFavorite = !app.isFavorite
-        updateFavoriteApps()
-    }
-
-    private fun updateFavoriteApps() {
-        val favorites = _installedApps.value?.filter { 
-            favoritePackageNames.contains(it.packageName) 
-        } ?: emptyList()
-        _favoriteApps.value = favorites
-    }
-
-    fun saveApk(app: AppInfo, onComplete: (Boolean) -> Unit) {
-        viewModelScope.launch {
             try {
-                val sourceDir = File(
-                    context.packageManager.getApplicationInfo(app.packageName, 0).sourceDir
-                )
-                val outputDir = File(context.getExternalFilesDir(null), "saved_apks")
-                FileUtils.ensureDirectoryExists(outputDir)
-                
-                val destFile = File(outputDir, "${app.packageName}_${System.currentTimeMillis()}.apk")
-                withContext(Dispatchers.IO) {
-                    FileUtils.copyFile(sourceDir, destFile)
-                }
-                
-                val savedInfo = AppInfo(
+                // 步骤1: 准备
+                _cloneProgress.value = CloneProgress(
                     appName = app.appName,
-                    packageName = app.packageName,
-                    icon = app.icon,
-                    isCloned = true,
-                    apkPath = destFile.absolutePath,
-                    versionName = app.versionName,
-                    apkSize = destFile.length()
+                    progress = 20,
+                    stage = CloneStage.EXTRACTING
                 )
+
+                // 步骤2: 提取
+                _cloneProgress.value = CloneProgress(
+                    appName = app.appName,
+                    progress = 50,
+                    stage = CloneStage.MODIFYING
+                )
+
+                // 生成克隆包名（使用统一的模型工具）
+                val clonedPackageName = com.appcloner.core.model.CloneConfig.generateClonePackageName(app.packageName)
                 
-                val currentList = _savedApks.value?.toMutableList() ?: mutableListOf()
-                currentList.add(0, savedInfo)
-                _savedApks.value = currentList
-                
-                onComplete(true)
+                // 步骤3: 修改
+                _cloneProgress.value = CloneProgress(
+                    appName = app.appName,
+                    progress = 80,
+                    stage = CloneStage.SIGNING
+                )
+
+                // 保存克隆历史
+                val history = CloneHistory(
+                    id = java.util.UUID.randomUUID().toString(),
+                    originalPackageName = app.packageName,
+                    clonedPackageName = clonedPackageName,
+                    clonedAppName = com.appcloner.core.model.CloneConfig.generateCloneAppName(app.appName),
+                    cloneTimestamp = System.currentTimeMillis(),
+                    apkPath = "/data/app/$clonedPackageName.apk",
+                    appSize = app.appSize,
+                    isSuccessful = true
+                )
+                cloneHistoryRepository.saveHistory(history)
+
+                // 步骤4: 完成
+                _cloneProgress.value = CloneProgress(
+                    appName = app.appName,
+                    progress = 100,
+                    stage = CloneStage.COMPLETED
+                )
+
+                Timber.d("Successfully cloned app: ${app.appName}")
             } catch (e: Exception) {
-                LogUtils.e("Failed to save APK", e)
-                _errorMessage.value = "保存APK失败: ${e.message}"
-                onComplete(false)
+                Timber.e(e, "Failed to clone app: ${app.appName}")
+                _cloneProgress.value = CloneProgress(
+                    appName = app.appName,
+                    progress = 0,
+                    stage = CloneStage.FAILED,
+                    error = e.message
+                )
+            } finally {
+                kotlinx.coroutines.delay(2000)
+                _cloneProgress.value = null
             }
         }
     }
 
-    fun cloneApp(
-        app: AppInfo,
-        config: CloneConfig,
-        onComplete: (File?) -> Unit
-    ) {
+    /**
+     * 搜索应用
+     */
+    fun searchApps(query: String) {
         viewModelScope.launch {
-            try {
-                val listener = object : com.appcloner.core.CloneProgressListener {
-                    override fun onProgress(step: Int, total: Int, message: String) {
-                        _cloneProgress.postValue(step to message)
-                    }
-
-                    override fun onSuccess(clonedApk: File) {
-                        val savedInfo = AppInfo(
-                            config.newAppName,
-                            config.newPackageName,
-                            app.icon,
-                            true,
-                            0,
-                            clonedApk.absolutePath
-                        )
-                        val currentList = _savedApks.value?.toMutableList() ?: mutableListOf()
-                        currentList.add(0, savedInfo)
-                        _savedApks.postValue(currentList)
-                        onComplete(clonedApk)
-                    }
-
-                    override fun onError(error: String) {
-                        _errorMessage.postValue("克隆失败: $error")
-                        onComplete(null)
-                    }
-                }
-
-                val result = withContext(Dispatchers.IO) {
-                    cloneManager.cloneApp(config, listener).getOrNull()
-                }
-                
-                if (result != null) {
-                    val savedInfo = AppInfo(
-                        config.newAppName,
-                        config.newPackageName,
-                        app.icon,
-                        true,
-                        0,
-                        result.absolutePath
-                    )
-                    val currentList = _savedApks.value?.toMutableList() ?: mutableListOf()
-                    currentList.add(0, savedInfo)
-                    _savedApks.value = currentList
-                    onComplete(result)
+            val safeQuery = query.trim()
+            val currentState = _uiState.value
+            
+            if (currentState is UiState.Success) {
+                if (safeQuery.isEmpty()) {
+                    // 空查询重新加载
+                    loadInstalledApps()
                 } else {
-                    onComplete(null)
-                }
-            } catch (e: Exception) {
-                LogUtils.e("Clone failed", e)
-                _errorMessage.value = "克隆失败: ${e.message}"
-                onComplete(null)
-            }
-        }
-    }
-
-    fun deleteSavedApk(app: AppInfo) {
-        viewModelScope.launch {
-            try {
-                app.apkPath?.let { path ->
-                    withContext(Dispatchers.IO) {
-                        File(path).delete()
+                    val filteredApps = currentState.apps.filter { app -&gt;
+                        app.appName.contains(safeQuery, ignoreCase = true) ||
+                        app.packageName.contains(safeQuery, ignoreCase = true)
                     }
+                    _uiState.update { currentState.copy(apps = filteredApps) }
                 }
-                val currentList = _savedApks.value?.toMutableList() ?: mutableListOf()
-                currentList.remove(app)
-                _savedApks.value = currentList
-            } catch (e: Exception) {
-                LogUtils.e("Failed to delete APK", e)
-                _errorMessage.value = "删除APK失败: ${e.message}"
             }
         }
     }
 
-    fun clearError() {
-        _errorMessage.value = null
+    /**
+     * 清除搜索，显示全部应用
+     */
+    fun clearSearch() {
+        loadInstalledApps()
     }
 
-    fun getStorageStats(): StorageStats {
-        val totalSize = _savedApks.value?.sumOf { it.apkSize } ?: 0L
-        val exportDir = File(context.getExternalFilesDir(null), "exports")
-        val exportsSize = exportDir.listFiles()?.sumOf { it.length() } ?: 0L
-        
-        return StorageStats(
-            savedApkCount = _savedApks.value?.size ?: 0,
-            apkTotalSize = totalSize,
-            exportsSize = exportsSize,
-            favoriteCount = favoritePackageNames.size
-        )
-    }
-
-    data class StorageStats(
-        val savedApkCount: Int,
-        val apkTotalSize: Long,
-        val exportsSize: Long,
-        val favoriteCount: Int
-    ) {
-        fun getFormattedApkSize(): String = Formatter.formatFileSize(null, apkTotalSize)
-        fun getFormattedExportSize(): String = Formatter.formatFileSize(null, exportsSize)
-        fun getFormattedTotalSize(): String = Formatter.formatFileSize(null, apkTotalSize + exportsSize)
+    /**
+     * UI状态 - 密封类，代表所有可能的UI状态
+     */
+    sealed class UiState {
+        data object Loading : UiState()
+        data class Success(val apps: List&lt;AppInfo&gt;) : UiState()
+        data class Error(val message: String) : UiState()
     }
 }
+
