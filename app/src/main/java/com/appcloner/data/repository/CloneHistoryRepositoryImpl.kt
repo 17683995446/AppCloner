@@ -38,7 +38,8 @@ class CloneHistoryRepositoryImpl @Inject constructor(
     
     override suspend fun deleteHistory(id: String): Boolean {
         Timber.d("Deleting clone history: $id")
-        cloneHistoryDao.deleteById(id)
+        val longId = id.toLongOrNull() ?: return false
+        cloneHistoryDao.deleteById(longId)
         return true
     }
     
