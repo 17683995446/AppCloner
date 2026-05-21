@@ -26,6 +26,7 @@ object DatabaseModule {
 
     private val MIGRATION_1_2 = object : Migration(1, 2) {
         override fun migrate(database: SupportSQLiteDatabase) {
+            // 创建 apps 表
             database.execSQL(
                 """
                 CREATE TABLE IF NOT EXISTS apps (
@@ -52,6 +53,39 @@ object DatabaseModule {
             database.execSQL(
                 """
                 CREATE UNIQUE INDEX IF NOT EXISTS index_apps_packageName ON apps(packageName)
+                """
+            )
+            
+            // 创建 clone_history 表
+            database.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS clone_history (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    originalPackageName TEXT NOT NULL,
+                    clonedPackageName TEXT NOT NULL,
+                    clonedAppName TEXT NOT NULL,
+                    cloneTimestamp INTEGER NOT NULL,
+                    apkPath TEXT NOT NULL,
+                    appSize INTEGER NOT NULL DEFAULT 0,
+                    isSuccessful INTEGER NOT NULL DEFAULT 1,
+                    errorMessage TEXT
+                )
+                """
+            )
+            
+            // 创建 clone_templates 表
+            database.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS clone_templates (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    name TEXT NOT NULL,
+                    description TEXT NOT NULL,
+                    packageNamePattern TEXT NOT NULL,
+                    customSettings TEXT NOT NULL,
+                    createdAt INTEGER NOT NULL,
+                    isDefault INTEGER NOT NULL DEFAULT 0,
+                    usageCount INTEGER NOT NULL DEFAULT 0
+                )
                 """
             )
         }
