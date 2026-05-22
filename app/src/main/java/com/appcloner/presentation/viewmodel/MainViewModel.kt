@@ -28,6 +28,10 @@ class MainViewModel @Inject constructor(
     private val cloneHistoryRepository: CloneHistoryRepository
 ) : ViewModel() {
 
+    init {
+        Timber.d("[MainViewModel] Initializing MainViewModel")
+    }
+
     // UI状态 - 使用单一状态流
     private val _uiState = MutableStateFlow&lt;UiState&gt;(UiState.Loading)
     val uiState: StateFlow&lt;UiState&gt; = _uiState.asStateFlow()
@@ -40,28 +44,36 @@ class MainViewModel @Inject constructor(
      * 加载已安装的应用列表 - 首先从系统加载并同步，然后显示
      */
     fun loadInstalledApps() {
+        Timber.d("[MainViewModel] loadInstalledApps() called")
         viewModelScope.launch {
+            Timber.d("[MainViewModel] Setting UI state to Loading")
             _uiState.value = UiState.Loading
             
             try {
+                Timber.d("[MainViewModel] Calling appRepository.loadAndSyncInstalledApps()")
                 // 步骤1: 从系统加载并同步应用到数据库
                 val syncResult = appRepository.loadAndSyncInstalledApps()
+                Timber.d("[MainViewModel] loadAndSyncInstalledApps completed, isSuccess: ${syncResult.isSuccess}")
                 
                 if (syncResult.isSuccess) {
-                    Timber.d("Synced ${syncResult.getOrNull()} apps from system")
+                    Timber.d("[MainViewModel] Synced ${syncResult.getOrNull()} apps from system")
                 } else {
-                    Timber.w(syncResult.exceptionOrNull(), "Failed to sync installed apps")
+                    Timber.w(syncResult.exceptionOrNull(), "[MainViewModel] Failed to sync installed apps")
                 }
                 
+                Timber.d("[MainViewModel] Calling appRepository.getAllApps()")
                 // 步骤2: 从数据库订阅应用列表
                 val apps = appRepository.getAllApps()
-                apps.collect { appList ->
+                Timber.d("[MainViewModel] Starting to collect app updates")
+                apps.collect { appList -&gt;
+                    Timber.d("[MainViewModel] Received ${appList.size} apps from database")
                     _uiState.value = UiState.Success(apps = appList)
-                    Timber.d("Loaded ${appList.size} apps from database")
+                    Timber.d("[MainViewModel] UI state updated to Success with ${appList.size} apps")
                 }
             } catch (e: Exception) {
-                Timber.e(e, "Failed to load installed apps")
+                Timber.e(e, "[MainViewModel] Failed to load installed apps")
                 _uiState.value = UiState.Error(message = e.message ?: "Unknown error")
+                Timber.d("[MainViewModel] UI state updated to Error")
             }
         }
     }
@@ -70,7 +82,9 @@ class MainViewModel @Inject constructor(
      * 执行应用克隆操作
      */
     fun cloneApp(app: AppInfo) {
+        Timber.d("[MainViewModel] cloneApp() called for app: ${app.appName}, package: ${app.packageName}")
         viewModelScope.launch {
+            Timber.d("[MainViewModel] Setting clone progress to PREPARING")
             _cloneProgress.value = CloneProgress(
                 appName = app.appName,
                 progress = 0,
@@ -78,6 +92,7 @@ class MainViewModel @Inject constructor(
             )
 
             try {
+                Timber.d("[MainViewModel] Step 1: Preparing clone, progress 20%")
                 // 步骤1: 准备
                 _cloneProgress.value = CloneProgress(
                     appName = app.appName,
@@ -85,6 +100,7 @@ class MainViewModel @Inject constructor(
                     stage = CloneStage.EXTRACTING
                 )
 
+                Timber.d("[MainViewModel] Step 2: Extracting, progress 50%")
                 // 步骤2: 提取
                 _cloneProgress.value = CloneProgress(
                     appName = app.appName,
@@ -92,9 +108,12 @@ class MainViewModel @Inject constructor(
                     stage = CloneStage.MODIFYING
                 )
 
+                Timber.d("[MainViewModel] Generating clone package name for: ${app.packageName}")
                 // 生成克隆包名（使用统一的模型工具）
                 val clonedPackageName = com.appcloner.core.model.CloneConfig.generateClonePackageName(app.packageName)
+                Timber.d("[MainViewModel] Generated clone package name: $clonedPackageName")
                 
+                Timber.d("[MainViewModel] Step 3: Modifying, progress 80%")
                 // 步骤3: 修改
                 _cloneProgress.value = CloneProgress(
                     appName = app.appName,
@@ -102,9 +121,12 @@ class MainViewModel @Inject constructor(
                     stage = CloneStage.SIGNING
                 )
 
+                Timber.d("[MainViewModel] Calling appRepository.incrementCloneCount()")
                 // 更新应用克隆计数和标记
                 appRepository.incrementCloneCount(app.packageName)
+                Timber.d("[MainViewModel] incrementCloneCount completed")
 
+                Timber.d("[MainViewModel] Creating clone history")
                 // 保存克隆历史
                 val history = CloneHistory(
                     id = java.util.UUID.randomUUID().toString(),
@@ -116,8 +138,11 @@ class MainViewModel @Inject constructor(
                     appSize = app.appSize,
                     isSuccessful = true
                 )
+                Timber.d("[MainViewModel] Calling cloneHistoryRepository.saveHistory()")
                 cloneHistoryRepository.saveHistory(history)
+                Timber.d("[MainViewModel] saveHistory completed")
 
+                Timber.d("[MainViewModel] Step 4: Completing clone, progress 100%")
                 // 步骤4: 完成
                 _cloneProgress.value = CloneProgress(
                     appName = app.appName,
@@ -125,18 +150,21 @@ class MainViewModel @Inject constructor(
                     stage = CloneStage.COMPLETED
                 )
 
-                Timber.d("Successfully cloned app: ${app.appName}")
+                Timber.d("[MainViewModel] Successfully cloned app: ${app.appName}")
             } catch (e: Exception) {
-                Timber.e(e, "Failed to clone app: ${app.appName}")
+                Timber.e(e, "[MainViewModel] Failed to clone app: ${app.appName}")
                 _cloneProgress.value = CloneProgress(
                     appName = app.appName,
                     progress = 0,
                     stage = CloneStage.FAILED,
                     error = e.message
                 )
+                Timber.d("[MainViewModel] Clone progress set to FAILED")
             } finally {
+                Timber.d("[MainViewModel] Waiting 2 seconds before clearing progress")
                 kotlinx.coroutines.delay(2000)
                 _cloneProgress.value = null
+                Timber.d("[MainViewModel] Clone progress cleared")
             }
         }
     }
@@ -145,21 +173,32 @@ class MainViewModel @Inject constructor(
      * 搜索应用
      */
     fun searchApps(query: String) {
+        Timber.d("[MainViewModel] searchApps() called with query: '$query'")
         viewModelScope.launch {
             val safeQuery = query.trim()
+            Timber.d("[MainViewModel] Trimmed query: '$safeQuery'")
             val currentState = _uiState.value
+            Timber.d("[MainViewModel] Current UI state: ${currentState.javaClass.simpleName}")
             
             if (currentState is UiState.Success) {
+                Timber.d("[MainViewModel] Current state is Success")
                 if (safeQuery.isEmpty()) {
+                    Timber.d("[MainViewModel] Empty query, reloading all apps")
                     // 空查询重新加载
                     loadInstalledApps()
                 } else {
+                    Timber.d("[MainViewModel] Filtering apps with query: '$safeQuery'")
                     val filteredApps = currentState.apps.filter { app -&gt;
-                        app.appName.contains(safeQuery, ignoreCase = true) ||
-                        app.packageName.contains(safeQuery, ignoreCase = true)
+                        val matchesAppName = app.appName.contains(safeQuery, ignoreCase = true)
+                        val matchesPackageName = app.packageName.contains(safeQuery, ignoreCase = true)
+                        matchesAppName || matchesPackageName
                     }
+                    Timber.d("[MainViewModel] Filtered to ${filteredApps.size} apps")
                     _uiState.update { currentState.copy(apps = filteredApps) }
+                    Timber.d("[MainViewModel] UI state updated with filtered apps")
                 }
+            } else {
+                Timber.d("[MainViewModel] Current state is not Success, cannot search")
             }
         }
     }
@@ -168,6 +207,7 @@ class MainViewModel @Inject constructor(
      * 清除搜索，显示全部应用
      */
     fun clearSearch() {
+        Timber.d("[MainViewModel] clearSearch() called")
         loadInstalledApps()
     }
 
@@ -175,12 +215,14 @@ class MainViewModel @Inject constructor(
      * 切换应用收藏状态
      */
     fun toggleFavorite(app: AppInfo) {
+        Timber.d("[MainViewModel] toggleFavorite() called for app: ${app.appName}, current favorite: ${app.isFavorite}")
         viewModelScope.launch {
             try {
+                Timber.d("[MainViewModel] Calling appRepository.toggleFavorite()")
                 appRepository.toggleFavorite(app.packageName)
-                Timber.d("Toggle favorite for: ${app.appName}")
+                Timber.d("[MainViewModel] Toggle favorite completed for: ${app.appName}")
             } catch (e: Exception) {
-                Timber.e(e, "Failed to toggle favorite")
+                Timber.e(e, "[MainViewModel] Failed to toggle favorite")
             }
         }
     }
@@ -194,4 +236,3 @@ class MainViewModel @Inject constructor(
         data class Error(val message: String) : UiState()
     }
 }
-
