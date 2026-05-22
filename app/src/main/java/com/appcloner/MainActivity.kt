@@ -52,7 +52,8 @@ class MainActivity : AppCompatActivity() {
 
         appAdapter = AppAdapter(
             onAppClick = { app -> showAppDetails(app) },
-            onCloneClick = { app -> cloneApp(app) }
+            onCloneClick = { app -> cloneApp(app) },
+            onFavoriteClick = { app -> toggleFavorite(app) }
         )
 
         recyclerView.apply {
@@ -128,5 +129,11 @@ class MainActivity : AppCompatActivity() {
     private fun cloneApp(app: AppInfo) {
         viewModel.cloneApp(app)
         Toast.makeText(this, "开始克隆: ${app.appName}", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun toggleFavorite(app: AppInfo) {
+        viewModel.toggleFavorite(app)
+        val message = if (app.isFavorite) "已取消收藏: ${app.appName}" else "已收藏: ${app.appName}"
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 }

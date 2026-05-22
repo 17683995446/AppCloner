@@ -172,6 +172,20 @@ class MainViewModel @Inject constructor(
     }
 
     /**
+     * 切换应用收藏状态
+     */
+    fun toggleFavorite(app: AppInfo) {
+        viewModelScope.launch {
+            try {
+                appRepository.toggleFavorite(app.packageName)
+                Timber.d("Toggle favorite for: ${app.appName}")
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to toggle favorite")
+            }
+        }
+    }
+
+    /**
      * UI状态 - 密封类，代表所有可能的UI状态
      */
     sealed class UiState {

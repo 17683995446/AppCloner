@@ -21,7 +21,10 @@ object AppInfoMapper {
             apkPath = domain.apkPath,
             appSize = domain.appSize,
             isCloned = domain.isCloned,
-            cloneCount = domain.cloneCount
+            cloneCount = domain.cloneCount,
+            lastAccessedTime = System.currentTimeMillis(),
+            createdAt = System.currentTimeMillis(),
+            updatedAt = System.currentTimeMillis()
         )
     }
     
