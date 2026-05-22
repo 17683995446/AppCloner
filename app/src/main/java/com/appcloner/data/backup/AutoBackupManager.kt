@@ -193,9 +193,9 @@ object AutoBackupManager {
                     "versionCode": ${app.versionCode},
                     "isFavorite": ${app.isFavorite},
                     "isSystemApp": ${app.isSystemApp},
-                    "apkSize": ${app.apkSize},
-                    "installTime": ${app.installTime},
-                    "updateTime": ${app.updateTime}
+                    "apkSize": ${app.appSize},
+                    "firstInstallTime": ${app.firstInstallTime},
+                    "lastUpdateTime": ${app.lastUpdateTime}
                 }
             """.trimIndent()
         }
@@ -210,11 +210,11 @@ object AutoBackupManager {
                     "id": "${template.id}",
                     "name": "${template.name}",
                     "description": "${template.description}",
-                    "packageSuffix": "${template.packageSuffix}",
-                    "appNameSuffix": "${template.appNameSuffix}",
-                    "copyData": ${template.copyData},
-                    "keepIcon": ${template.keepIcon},
-                    "isDefault": ${template.isDefault}
+                    "packageNamePattern": "${template.packageNamePattern}",
+                    "customSettings": "${template.customSettings}",
+                    "createdAt": ${template.createdAt},
+                    "isDefault": ${template.isDefault},
+                    "usageCount": ${template.usageCount}
                 }
             """.trimIndent()
         }
@@ -227,14 +227,15 @@ object AutoBackupManager {
             """
                 {
                     "id": "${item.id}",
-                    "originalAppName": "${item.originalAppName}",
                     "originalPackageName": "${item.originalPackageName}",
-                    "clonedAppName": "${item.clonedAppName}",
                     "clonedPackageName": "${item.clonedPackageName}",
-                    "clonedApkPath": "${item.clonedApkPath ?: ""}",
-                    "cloneTime": ${item.cloneTime},
-                    "templateUsed": "${item.templateUsed ?: ""}",
-                    "cloneStatus": "${item.cloneStatus}"
+                    "clonedAppName": "${item.clonedAppName}",
+                    "cloneTimestamp": ${item.cloneTimestamp},
+                    "apkPath": "${item.apkPath ?: ""}",
+                    "appSize": ${item.appSize},
+                    "isSuccessful": ${item.isSuccessful},
+                    "isActive": ${item.isActive},
+                    "errorMessage": "${item.errorMessage ?: ""}"
                 }
             """.trimIndent()
         }
