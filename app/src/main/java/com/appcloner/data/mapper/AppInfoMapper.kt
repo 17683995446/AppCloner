@@ -28,6 +28,28 @@ object AppInfoMapper {
         )
     }
     
+    fun toEntityWithTimestamp(domain: AppInfo, lastAccessed: Long, created: Long, updated: Long): AppInfoEntity {
+        return AppInfoEntity(
+            id = 0,
+            appName = domain.appName,
+            packageName = domain.packageName,
+            versionName = domain.versionName,
+            versionCode = domain.versionCode,
+            isSystemApp = domain.isSystemApp,
+            firstInstallTime = domain.firstInstallTime,
+            lastUpdateTime = domain.lastUpdateTime,
+            isFavorite = domain.isFavorite,
+            isSavedApk = domain.isSavedApk,
+            apkPath = domain.apkPath,
+            appSize = domain.appSize,
+            isCloned = domain.isCloned,
+            cloneCount = domain.cloneCount,
+            lastAccessedTime = lastAccessed,
+            createdAt = created,
+            updatedAt = updated
+        )
+    }
+    
     fun toDomain(entity: AppInfoEntity): AppInfo {
         return AppInfo(
             appName = entity.appName,
@@ -46,11 +68,11 @@ object AppInfoMapper {
         )
     }
     
-    fun toDomainList(entities: List&lt;AppInfoEntity&gt;): List&lt;AppInfo&gt; {
+    fun toDomainList(entities: List<AppInfoEntity>): List<AppInfo> {
         return entities.map { toDomain(it) }
     }
     
-    fun toEntityList(domains: List&lt;AppInfo&gt;): List&lt;AppInfoEntity&gt; {
+    fun toEntityList(domains: List<AppInfo>): List<AppInfoEntity> {
         return domains.map { toEntity(it) }
     }
 }
